@@ -18,7 +18,13 @@ and is being grown into a fullstack editor.
 ```
 frontend/   React app (Vite)
 backend/    NestJS API (planned)
+docs/       project documentation
 ```
+
+## Docs
+
+- [Phase 0 — Frontend port](docs/phase-0-frontend-port.md): features, structure and how the map was ported
+- [Phase 0 — Roadmap](docs/phase-0-roadmap.md): backend stack, data model, API and phases 1–10
 
 ## Run locally
 
