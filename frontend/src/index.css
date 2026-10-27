@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@theme {
+  --color-forest-dark: #1B2E1F;
+  --color-forest-mid: #2D4A32;
+  /* One tone deeper than --color-forest-dark — the footer's copyright-row
+     band, standing in for a hairline as the divider from the CTA above. */
+  --color-forest-deep: #16261A;
+  --color-ivory: #F5F1E8;
+  /* Warm off-white, slightly darker than --color-ivory — the sketch-plan
+     map's paper backing, distinct from the page's own background tone. */
+  --color-paper: #FAF7EF;
+  /* Warm paper-toned band background for the "Three ways to work with
+     us" section — distinct from --color-paper (the map sheet's backing)
+     and from --color-ivory (the page's own background). */
+  --color-paper-dark: #EFE9DC;
+  /* Manifesto band — half a shade deeper than --color-ivory, just enough
+     to read as a distinct pause between the map and the plans band,
+     without going as dark as --color-paper-dark. */
+  --color-manifesto-band: #EDE6D6;
+  --color-gold: #B8965A;
+  /* Same hue/saturation as --color-gold, darkened for text use — plain
+     --color-gold on --color-ivory is only 2.47:1 (fails WCAG AA at any
+     size). Use this for gold *text*; keep --color-gold for borders/fills/
+     focus rings, where contrast against a background isn't the concern. */
+  --color-gold-dark: #796034;
+  --color-ink: #0D0D0D;
+  /* Muted terracotta, not an alarm red — stays in the earthy/botanical
+     palette. ~5.4:1 contrast on --color-ivory, passes WCAG AA for text. */
+  --color-error: #A6432B;
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 2rem;
+  --spacing-lg: 4rem;
+  /* Fluid, same pattern as the type scale below: 128px only from 1024px up,
+     scaling linearly down to a 70px floor at ≤375px. 128px of dead air
+     between page sections reads as too much on a phone. */
+  --spacing-xl: clamp(4.375rem, 2.28rem + 8.94vw, 8rem);
+  /* Content cap shared by nav/hero/main/footer/plans-band — replaces the
+     old max-w-5xl (1024px): the plan sheet needs to read as a large
+     working drawing again, not a nested thumbnail. */
+  --container-content: 77.5rem;
+  /* Fluid type scale — replaces fixed text-* sizes on real content so
+     headings/body text scale continuously with viewport width instead of
+     jumping at breakpoints. Same 375px->1024px interpolation method
+     throughout: solve base+slope*vw for the min/max rem bounds. */
+  /* Hero H1 — 40px floor at 375px up to 96px at 1280px+ (post art-director
+     polish pass: raised from the previous 84px/1024px cap so the hero
+     reads at full scale on wide screens). */
+  --text-hero: clamp(2.5rem, 1.05rem + 6.19vw, 6rem);
+  /* Section headings — chapter-level scale (32px→52px), not a subheading
+     size, per polish pass. */
+  --text-section: clamp(2rem, 1.4rem + 2.6vw, 3.25rem);
+  /* Manifesto band statement line — 34px floor at 375px up to 52px at
+     1024px+, same interpolation method as the rest of this scale. Own
+     token rather than reusing --text-section: this line isn't a section
+     heading (no number mark, no h2), just a similarly-sized pull-quote. */
+  --text-manifesto: clamp(2.125rem, 1.475rem + 2.77vw, 3.25rem);
+  --text-card-title: clamp(1.05rem, 0.95rem + 0.4vw, 1.25rem);
+  --text-body: clamp(0.9rem, 0.85rem + 0.2vw, 1rem);
+}
+
+@theme {
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-marker: "Caveat", cursive;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-ivory);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
