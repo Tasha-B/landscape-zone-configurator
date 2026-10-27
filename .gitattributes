@@ -1,0 +1,5 @@
+# LF everywhere: the code is edited on Windows but built in Linux (Docker, GitHub Actions)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
