@@ -1,12 +1,12 @@
 import { AnimatePresence, motion } from "framer-motion";
 import RecommendationCard from "./RecommendationCard";
-import { zoneContent, type SpaceZone } from "./zoneData";
 import type { Lang, Translations } from "../../lib/i18n/translations";
+import type { Zone } from "../../lib/plan/types";
 
 interface SpaceMapperPanelProps {
   t: Translations;
   lang: Lang;
-  selectedZones: SpaceZone[];
+  selectedZones: Zone[];
   onClear: () => void;
 }
 
@@ -37,7 +37,7 @@ export default function SpaceMapperPanel({ t, lang, selectedZones, onClear }: Sp
               >
                 <RecommendationCard
                   num={String(index + 1).padStart(2, "0")}
-                  content={zoneContent(zone, lang)}
+                  content={zone.content[lang]}
                 />
               </motion.div>
             ))}

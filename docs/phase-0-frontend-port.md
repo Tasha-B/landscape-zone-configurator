@@ -110,6 +110,6 @@ Everything else was moved over 1:1, so the behaviour matches the live site at <h
 
 ## Known gaps
 
-- Zone data is spread over several maps keyed by zone id: shapes, marker lines, label positions, hover colors and copy. Marker lines, label positions and areas are hand-placed coordinates rather than computed. This has to become a single `Zone` model before zones can come from the API (see [phase-0-roadmap.md](phase-0-roadmap.md), phase 1).
+- ~~Zone data is spread over several maps keyed by zone id: shapes, marker lines, label positions, hover colors and copy. Marker lines, label positions and areas are hand-placed coordinates rather than computed.~~ **Resolved in phase 1:** one `Zone` record per zone, with markers and areas computed (see [phase-1-zone-model.md](phase-1-zone-model.md)).
 - Oxlint reports two `only-export-components` warnings, because each provider and its hook share a file. They will be split when state management is revisited.
-- There are no automated tests yet. The first ones will cover the geometry utilities (area, centroid, marker generation).
+- ~~There are no automated tests yet.~~ **Resolved in phase 1:** Vitest runs in CI and covers geometry, marker generation and the demo plan.

@@ -22,13 +22,16 @@ The data for one zone is spread over five structures in two files, all keyed by 
 
 `zoneRenderOrder`, `hitAreaPaddingOverrides` and `PALETTE_SWATCHES` repeat zone ids and colors once more. Adding, moving or resizing a zone means editing every one of these by hand, which an editor (phase 6) cannot do.
 
+The geometry is also incomplete. The **open floor** is drawn as a rectangle covering only the corridor. The real zone is L-shaped: it also includes the lower-right area next to the break room and the curved bay on the right, where the signature corner sits. That lower part is not clickable today and never gets the marker.
+
 ## Target model
 
 ```ts
 // src/lib/plan/types.ts
 export type Shape =
   | { kind: "rect"; x: number; y: number; width: number; height: number; rx: number }
-  | { kind: "circle"; cx: number; cy: number; r: number };
+  | { kind: "circle"; cx: number; cy: number; r: number }
+  | { kind: "polygon"; points: [number, number][] }; // curves approximated by points
 
 export type ZoneType =
   | "reception" | "meeting-room" | "open-floor" | "break-room" | "signature-corner" | "custom";
@@ -47,7 +50,7 @@ export interface Zone {
   color: string;                      // marker, hover tint and legend swatch
   zIndex: number;                     // paint and tab order
   hitPadding?: number;                // default 20; signature corner uses 0
-  label?: { dx: number; dy: number; fontSize?: number }; // offset from the shape center
+  label?: { dx: number; dy: number; fontSize?: number; areaDy?: number }; // offset from the shape center; area caption areaDy below (default 22)
   content: Record<Lang, ZoneContent>;
 }
 
@@ -64,9 +67,9 @@ export interface FloorPlan {
 
 | Was stored | Becomes |
 | --- | --- |
-| marker strokes and rotation | `generateMarkerStrokes(shape, seed)`: horizontal strokes across the shape with small deterministic jitter and tilt, seeded from the zone id so they look hand-drawn but never change between renders |
-| label position | shape center + optional `label.dx/dy` (the current positions are kept as offsets, because they avoid the furniture) |
-| area caption `"≈ 28 m²"` | `area(shape) / pxPerMeter²`, rounded |
+| marker strokes and rotation | `generateMarkerStrokes(shape, seed)`: horizontal scanlines across the shape, one stroke per interval where the line is inside the shape (so concave polygons work), with small deterministic jitter and tilt seeded from the zone id. They look hand-drawn but never change between renders. |
+| label position | shape center + optional `label.dx/dy` (the current positions are kept as offsets, because they avoid the furniture). The area caption sits `label.areaDy` below the name: 22 by default, 34 in the meeting room, where it sits inside the drawn table |
+| area caption `"≈ 28 m²"` | `area(shape) / pxPerMeter²`, rounded. Each zone counts its own full shape: zones drawn on top (higher `zIndex`) are **not** subtracted. The signature corner sits on top of the open floor, and the floor under it still belongs to the open floor. |
 | hover color | `color` at fixed alpha |
 | render order, padding overrides | `zIndex`, `hitPadding` |
 | palette legend | `plan.zones` mapped to swatches |
@@ -98,19 +101,27 @@ frontend/src/
 Each step is a separate commit, and the app builds after every one.
 
 1. **Tests setup.** Add Vitest, an `npm test` script and a `Test` step in CI.
-2. **Types and geometry.** Add `types.ts` and `geometry.ts` with tests: rect and circle area, center, bounds, padding.
-3. **Markers.** Add `random.ts` and `markers.ts` with tests: same seed gives same strokes, strokes stay inside the shape bounds, stroke count grows with height, circles get shorter strokes near the top and bottom.
-4. **Demo plan.** Add `demoPlan.ts` holding the current geometry, colors and EN / RU copy in the new model, with tests: unique ids, unique `zIndex`, both languages present, `shape` valid.
+2. **Types and geometry.** Add `types.ts` and `geometry.ts` with tests for rect, circle and polygon:
+   - area (polygon via the shoelace formula), center, bounds;
+   - scanline intervals (one or more per line for concave polygons);
+   - hit padding: rect and circle grow geometrically; a polygon gets a transparent stroke `2 × padding` wide that still receives pointer events.
+3. **Markers.** Add `random.ts` and `markers.ts` with tests:
+   - the same seed gives the same strokes;
+   - strokes stay inside the shape;
+   - the stroke count grows with height;
+   - circles get shorter strokes near the top and bottom;
+   - an L-shaped polygon gets strokes in both of its parts.
+4. **Demo plan.** Add `demoPlan.ts` holding the current geometry, colors and EN / RU copy in the new model. The open floor is redrawn as an L-shaped polygon traced along the inner walls, with the right-hand bay approximated by points. Tests: unique ids, unique `zIndex`, both languages present, `shape` valid.
 5. **Switch the map to the model.** `SpaceMapperPlan`, `SpaceMapperPanel` and `SpaceMapper` read from `FloorPlan`. Remove the old maps and `zoneData.ts`, and move the static artwork into `PlanBackground.tsx`.
 6. **Visual check.** Compare the map before and after at desktop and mobile widths, in EN and RU, with and without reduced motion. Attach before and after screenshots to the PR.
 7. **Docs.** Write `phase-1-zone-model.md` and update the known gaps in `phase-0-frontend-port.md`.
 
 ## Acceptance criteria
 
-- [ ] Every per-zone value lives in `demoPlan.ts`. `SpaceMapperPlan.tsx` contains no zone ids, coordinates or colors.
-- [ ] Adding a zone to `demoPlan.ts` is enough for it to be clickable, highlighted, labelled, listed in the legend and shown in the panel.
-- [ ] Marker strokes, area captions and legend are computed, and stay stable between renders.
-- [ ] Behaviour is unchanged: multi-select, hover, keyboard, hint, mobile sheet, reduced motion.
+- [x] Every per-zone value lives in `demoPlan.ts`. `SpaceMapperPlan.tsx` contains no zone ids, coordinates or colors.
+- [x] Adding a zone to `demoPlan.ts` is enough for it to be clickable, highlighted, labelled, listed in the legend and shown in the panel.
+- [x] Marker strokes, area captions and legend are computed, and stay stable between renders.
+- [x] Behaviour is unchanged: multi-select, hover, keyboard, hint, mobile sheet, reduced motion.
 - [ ] `npm test` passes in CI, and geometry and markers are covered.
 - [ ] `lint`, `typecheck` and `build` stay green.
 
@@ -118,14 +129,24 @@ Each step is a separate commit, and the app builds after every one.
 
 - **Marker strokes** will be generated rather than hand-placed. They will look similar (same color, opacity, width and slight tilt), but not identical.
 - **Hover tints** for meeting room, break room and signature corner currently use colors that differ from their marker colors. They will switch to the marker color at the same alpha.
-- **Area captions** become computed (see open question 1).
+- **Open floor** becomes L-shaped. The lower-right area and the right-hand bay become clickable, show the hover tint and get marker strokes. Under the signature corner its strokes stay visible: the circle has no fill and the strokes are translucent, so when both zones are selected their colors mix there (see decision 5). To keep the mix clean, the signature corner changes from mauve `#9A7A8C` (nearly opposite the open floor's green, so the overlap turned grey) to dusty blue `#4F7CAC`.
+- **Area captions** become computed. At 32 px per meter (the scale where reception is exactly 28 m²) the expected values are:
 
-## Open questions
+  | Zone | Label now | Computed |
+  | --- | --- | --- |
+  | Reception | 28 | 28 |
+  | Meeting room | 32 | 31 |
+  | Open floor | 96 | 82 (inset from the walls like the other rooms: 6 from the outer wall, 8 from inner walls; along the wall lines it would be ≈ 95) |
+  | Break room | 24 | 23 |
+  | Signature corner | 14 | 14 |
 
-1. **Open floor area.** At 32 px per meter (the scale where reception is exactly 28 m²), the computed areas are reception 28, meeting room 31 (now labelled 32), break room 23 (now 24), signature corner 14 (now 14), and **open floor 43 (now labelled 96)**. Options:
-   - **a. Trust the geometry** and show 43 m². This is consistent, and the sheet already says "not to scale". *(recommended)*
-   - b. Add an optional `areaOverride` to `Zone` for the design copy. This is simple, but it brings back hand-maintained data.
-2. **Polygon zones.** L-shaped rooms will need `kind: "polygon"`. The proposal is to add it in phase 6, together with the editor that can draw it, not now.
+## Decisions
+
+1. **Open floor shape.** The open floor is an L-shaped polygon: the corridor, the lower-right area next to the break room and the curved bay on the right. *(Decided 2026-10-28.)*
+2. **Overlapping zones.** The signature corner is a separate zone drawn on top of the open floor. Overlaps are not subtracted, so the open floor's area includes the floor under the circle. *(Decided 2026-10-28.)*
+3. **Areas are always computed** from the geometry. There is no `areaOverride` field. *(Decided 2026-10-28.)*
+4. **Polygons arrive in phase 1, not phase 6.** The open floor needs a polygon now. Phase 6 only adds drawing and editing them in the UI.
+5. **Overlapping markers are not masked.** Where zones overlap, each zone draws its full set of strokes and the translucent colors mix. *(Decided 2026-10-28.)*
 
 ## Out of scope
 

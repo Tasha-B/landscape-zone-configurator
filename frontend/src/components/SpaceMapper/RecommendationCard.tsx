@@ -1,8 +1,8 @@
-import type { SpaceZoneContent } from "./zoneData";
+import type { ZoneContent } from "../../lib/plan/types";
 
 interface RecommendationCardProps {
   num: string;
-  content: SpaceZoneContent;
+  content: ZoneContent;
 }
 
 export default function RecommendationCard({ num, content }: RecommendationCardProps) {
