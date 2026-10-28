@@ -118,10 +118,10 @@ Each step is a separate commit, and the app builds after every one.
 
 ## Acceptance criteria
 
-- [ ] Every per-zone value lives in `demoPlan.ts`. `SpaceMapperPlan.tsx` contains no zone ids, coordinates or colors.
-- [ ] Adding a zone to `demoPlan.ts` is enough for it to be clickable, highlighted, labelled, listed in the legend and shown in the panel.
-- [ ] Marker strokes, area captions and legend are computed, and stay stable between renders.
-- [ ] Behaviour is unchanged: multi-select, hover, keyboard, hint, mobile sheet, reduced motion.
+- [x] Every per-zone value lives in `demoPlan.ts`. `SpaceMapperPlan.tsx` contains no zone ids, coordinates or colors.
+- [x] Adding a zone to `demoPlan.ts` is enough for it to be clickable, highlighted, labelled, listed in the legend and shown in the panel.
+- [x] Marker strokes, area captions and legend are computed, and stay stable between renders.
+- [x] Behaviour is unchanged: multi-select, hover, keyboard, hint, mobile sheet, reduced motion.
 - [ ] `npm test` passes in CI, and geometry and markers are covered.
 - [ ] `lint`, `typecheck` and `build` stay green.
 
@@ -129,7 +129,7 @@ Each step is a separate commit, and the app builds after every one.
 
 - **Marker strokes** will be generated rather than hand-placed. They will look similar (same color, opacity, width and slight tilt), but not identical.
 - **Hover tints** for meeting room, break room and signature corner currently use colors that differ from their marker colors. They will switch to the marker color at the same alpha.
-- **Open floor** becomes L-shaped. The lower-right area and the right-hand bay become clickable, show the hover tint and get marker strokes. Under the signature corner its strokes stay visible: the circle has no fill and the strokes are translucent, so when both zones are selected their colors mix there (see decision 5).
+- **Open floor** becomes L-shaped. The lower-right area and the right-hand bay become clickable, show the hover tint and get marker strokes. Under the signature corner its strokes stay visible: the circle has no fill and the strokes are translucent, so when both zones are selected their colors mix there (see decision 5). To keep the mix clean, the signature corner changes from mauve `#9A7A8C` (nearly opposite the open floor's green, so the overlap turned grey) to dusty blue `#4F7CAC`.
 - **Area captions** become computed. At 32 px per meter (the scale where reception is exactly 28 m²) the expected values are:
 
   | Zone | Label now | Computed |
