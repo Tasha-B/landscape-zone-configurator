@@ -138,7 +138,9 @@ export const demoPlan: FloorPlan = {
       id: "signature-corner",
       type: "signature-corner",
       shape: { kind: "circle", cx: 588, cy: 385, r: 68 },
-      color: "#9A7A8C",
+      // Blue, a neighbour of the open floor's green on the color wheel, so
+      // where the two overlap the translucent strokes mix cleanly
+      color: "#4F7CAC",
       zIndex: 4,
       // It sits on top of the open floor; a padded hit area would steal
       // clicks from the floor around it
