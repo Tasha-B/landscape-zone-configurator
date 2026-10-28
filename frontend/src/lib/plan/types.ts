@@ -30,7 +30,9 @@ export interface Zone {
   color: string; // marker, hover tint and legend swatch
   zIndex: number; // paint and tab order
   hitPadding?: number; // default 20; signature corner uses 0
-  label?: { dx: number; dy: number; fontSize?: number }; // offset from the shape center
+  // Name position as an offset from the shape center; the area caption sits
+  // areaDy below it (default 22)
+  label?: { dx: number; dy: number; fontSize?: number; areaDy?: number };
   content: Record<Lang, ZoneContent>;
 }
 

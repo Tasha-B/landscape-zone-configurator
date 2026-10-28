@@ -50,7 +50,7 @@ export interface Zone {
   color: string;                      // marker, hover tint and legend swatch
   zIndex: number;                     // paint and tab order
   hitPadding?: number;                // default 20; signature corner uses 0
-  label?: { dx: number; dy: number; fontSize?: number }; // offset from the shape center
+  label?: { dx: number; dy: number; fontSize?: number; areaDy?: number }; // offset from the shape center; area caption areaDy below (default 22)
   content: Record<Lang, ZoneContent>;
 }
 
@@ -68,7 +68,7 @@ export interface FloorPlan {
 | Was stored | Becomes |
 | --- | --- |
 | marker strokes and rotation | `generateMarkerStrokes(shape, seed)`: horizontal scanlines across the shape, one stroke per interval where the line is inside the shape (so concave polygons work), with small deterministic jitter and tilt seeded from the zone id. They look hand-drawn but never change between renders. |
-| label position | shape center + optional `label.dx/dy` (the current positions are kept as offsets, because they avoid the furniture) |
+| label position | shape center + optional `label.dx/dy` (the current positions are kept as offsets, because they avoid the furniture). The area caption sits `label.areaDy` below the name: 22 by default, 34 in the meeting room, where it sits inside the drawn table |
 | area caption `"≈ 28 m²"` | `area(shape) / pxPerMeter²`, rounded. Each zone counts its own full shape: zones drawn on top (higher `zIndex`) are **not** subtracted. The signature corner sits on top of the open floor, and the floor under it still belongs to the open floor. |
 | hover color | `color` at fixed alpha |
 | render order, padding overrides | `zIndex`, `hitPadding` |
@@ -129,14 +129,14 @@ Each step is a separate commit, and the app builds after every one.
 
 - **Marker strokes** will be generated rather than hand-placed. They will look similar (same color, opacity, width and slight tilt), but not identical.
 - **Hover tints** for meeting room, break room and signature corner currently use colors that differ from their marker colors. They will switch to the marker color at the same alpha.
-- **Open floor** becomes L-shaped. The lower-right area and the right-hand bay become clickable, show the hover tint and get marker strokes. Under the signature corner the strokes are hidden, because the circle is drawn on top.
+- **Open floor** becomes L-shaped. The lower-right area and the right-hand bay become clickable, show the hover tint and get marker strokes. Under the signature corner its strokes stay visible: the circle has no fill and the strokes are translucent, so when both zones are selected their colors mix there (see decision 5).
 - **Area captions** become computed. At 32 px per meter (the scale where reception is exactly 28 m²) the expected values are:
 
   | Zone | Label now | Computed |
   | --- | --- | --- |
   | Reception | 28 | 28 |
   | Meeting room | 32 | 31 |
-  | Open floor | 96 | ≈ 90 (the exact value depends on how closely the polygon follows the walls) |
+  | Open floor | 96 | 82 (inset from the walls like the other rooms: 6 from the outer wall, 8 from inner walls; along the wall lines it would be ≈ 95) |
   | Break room | 24 | 23 |
   | Signature corner | 14 | 14 |
 
@@ -146,6 +146,7 @@ Each step is a separate commit, and the app builds after every one.
 2. **Overlapping zones.** The signature corner is a separate zone drawn on top of the open floor. Overlaps are not subtracted, so the open floor's area includes the floor under the circle. *(Decided 2026-10-28.)*
 3. **Areas are always computed** from the geometry. There is no `areaOverride` field. *(Decided 2026-10-28.)*
 4. **Polygons arrive in phase 1, not phase 6.** The open floor needs a polygon now. Phase 6 only adds drawing and editing them in the UI.
+5. **Overlapping markers are not masked.** Where zones overlap, each zone draws its full set of strokes and the translucent colors mix. *(Decided 2026-10-28.)*
 
 ## Out of scope
 
