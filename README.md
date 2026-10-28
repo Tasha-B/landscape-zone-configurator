@@ -8,7 +8,7 @@ and is being grown into a fullstack editor.
 
 | Layer    | Tech                                              | Status  |
 | -------- | ------------------------------------------------- | ------- |
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS v4, Framer Motion | ✅ |
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS v4, Framer Motion, Vitest | ✅ |
 | Backend  | NestJS, REST + WebSockets                         | planned |
 | Database | PostgreSQL                                        | planned |
 | DevOps   | Docker, docker-compose, GitHub Actions            | planned |
@@ -35,6 +35,6 @@ npm install
 npm run dev
 ```
 
-Other scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm run preview`.
+Other scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm test` (Vitest, single run), `npm run test:watch`, `npm run preview`.
 
-CI (GitHub Actions) runs lint, typecheck and build for the frontend on every pull request and on every push to `main`.
+CI (GitHub Actions) runs lint, typecheck, tests and build for the frontend on every pull request and on every push to `main`.
