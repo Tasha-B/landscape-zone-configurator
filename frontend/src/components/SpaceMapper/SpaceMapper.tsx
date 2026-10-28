@@ -1,16 +1,21 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { spaceZones, zoneContent } from "./zoneData";
 import RecommendationCard from "./RecommendationCard";
-import SpaceMapperPlan, { HINT_DELAY_MS, HINT_HOLD_S, HINT_TOTAL_S, HINT_ZONE_ID } from "./SpaceMapperPlan";
+import SpaceMapperPlan, { HINT_DELAY_MS, HINT_HOLD_S, HINT_TOTAL_S } from "./SpaceMapperPlan";
+import { HINT_ZONE_ID } from "./PlanBackground";
 import SpaceMapperPanel from "./SpaceMapperPanel";
 import SpaceMapperSheet from "./SpaceMapperSheet";
 import { useLanguage } from "../../lib/i18n/LanguageProvider";
 import { useSelection } from "../../lib/selection/SelectionProvider";
+import type { Zone } from "../../lib/plan/types";
+import { demoPlan } from "../../data/demoPlan";
 import { usePrefersReducedMotion } from "../../lib/usePrefersReducedMotion";
 import SectionNumber from "../SectionNumber/SectionNumber";
 import Button from "../Button/Button";
+
+// Zones come from the static demo plan until phase 4 loads plans from the API
+const plan = demoPlan;
 
 export default function SpaceMapper() {
   const { lang, t } = useLanguage();
@@ -18,8 +23,8 @@ export default function SpaceMapper() {
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const selectedZones = selectedIds
-    .map((id) => spaceZones.find((zone) => zone.id === id))
-    .filter((zone): zone is (typeof spaceZones)[number] => Boolean(zone));
+    .map((id) => plan.zones.find((zone) => zone.id === id))
+    .filter((zone): zone is Zone => Boolean(zone));
 
   // Reception's one-shot demo cycle. `hintActive` is render-read state; the
   // two refs are only ever touched from the viewport callback and its own
@@ -98,6 +103,7 @@ export default function SpaceMapper() {
           className="mx-auto block w-full max-w-[240px] cursor-pointer"
         >
           <SpaceMapperPlan
+            plan={plan}
             mode="preview"
             lang={lang}
             t={t}
@@ -120,7 +126,7 @@ export default function SpaceMapper() {
                 <RecommendationCard
                   key={zone.id}
                   num={String(index + 1).padStart(2, "0")}
-                  content={zoneContent(zone, lang)}
+                  content={zone.content[lang]}
                 />
               ))}
             </div>
@@ -131,6 +137,7 @@ export default function SpaceMapper() {
       <div className="mt-lg hidden flex-col items-start gap-md sm:flex lg:flex-row">
         <div className="w-full lg:min-w-0 lg:flex-1">
           <SpaceMapperPlan
+            plan={plan}
             mode="interactive"
             lang={lang}
             t={t}
@@ -153,6 +160,7 @@ export default function SpaceMapper() {
         t={t}
         plan={
           <SpaceMapperPlan
+            plan={plan}
             mode="interactive"
             lang={lang}
             t={t}
