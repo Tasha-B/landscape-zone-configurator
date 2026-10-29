@@ -9,15 +9,15 @@ and is being grown into a fullstack editor.
 | Layer    | Tech                                              | Status  |
 | -------- | ------------------------------------------------- | ------- |
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS v4, Framer Motion, Vitest | ✅ |
-| Backend  | NestJS, REST + WebSockets                         | planned |
-| Database | PostgreSQL                                        | planned |
-| DevOps   | Docker, docker-compose, GitHub Actions            | planned |
+| Backend  | NestJS 12, REST + WebSockets                      | scaffold: env validation, `/api/health` |
+| Database | PostgreSQL 18                                     | local, in Docker; not connected yet |
+| DevOps   | Docker, docker-compose, GitHub Actions            | CI for both apps; Postgres in docker-compose |
 
 ## Structure
 
 ```
 frontend/   React app (Vite)
-backend/    NestJS API (planned)
+backend/    NestJS API
 docs/       project documentation
 ```
 
@@ -27,15 +27,27 @@ docs/       project documentation
 - [Phase 0 — Roadmap](docs/phase-0-roadmap.md): backend stack, data model, API and phases 1–10
 - [Phase 1 — Zone model: plan](docs/phase-1-zone-model-plan.md): one `Zone` record per zone, computed markers and areas
 - [Phase 1 — Zone model](docs/phase-1-zone-model.md): the model, what is computed, the L-shaped open floor, tests and visual check
+- [Phase 2 — Backend scaffold: plan](docs/phase-2-backend-scaffold-plan.md): NestJS 12 API with env validation and `/api/health`, Postgres 18 in Docker, npm workspaces
+- [Phase 2 — Backend scaffold](docs/phase-2-backend-scaffold.md): versions, env validation, health, local Postgres, CI and findings
 
 ## Run locally
 
+The repo is an npm workspace: install and run everything from the root.
+
 ```bash
-cd frontend
-npm install
-npm run dev
+npm install            # installs every app from the root package-lock.json
+npm run dev:frontend   # Vite dev server on http://localhost:5173
 ```
 
-Other scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm test` (Vitest, single run), `npm run test:watch`, `npm run preview`.
+The API needs Docker Desktop for its database and a `backend/.env`:
 
-CI (GitHub Actions) runs lint, typecheck, tests and build for the frontend on every pull request and on every push to `main`.
+```bash
+cp backend/.env.example backend/.env
+npm run db:up          # Postgres 18 in Docker, waits until it is healthy
+npm run dev:backend    # API on http://localhost:3000, check GET /api/health
+npm run db:down        # stop Postgres; the data is kept
+```
+
+Root scripts `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` run in every app. To target one app, add `-w <app>`, for example `npm run test:watch -w frontend` or `npm run test:e2e -w backend`.
+
+CI (GitHub Actions) runs lint, typecheck, tests and build for both apps, in parallel jobs, on every pull request and on every push to `main`.
