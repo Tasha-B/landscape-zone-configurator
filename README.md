@@ -29,6 +29,7 @@ docs/       project documentation
 - [Phase 1 — Zone model](docs/phase-1-zone-model.md): the model, what is computed, the L-shaped open floor, tests and visual check
 - [Phase 2 — Backend scaffold: plan](docs/phase-2-backend-scaffold-plan.md): NestJS 12 API with env validation and `/api/health`, Postgres 18 in Docker, npm workspaces
 - [Phase 2 — Backend scaffold](docs/phase-2-backend-scaffold.md): versions, env validation, health, local Postgres, CI and findings
+- [Phase 3 — Database: plan](docs/phase-3-database-plan.md): Prisma 7 schema, first migration, seed from the demo plan, database health check
 
 ## Run locally
 
