@@ -122,11 +122,11 @@ Each step is a separate commit, and both apps build after every one.
 
 ## Acceptance criteria
 
-- [ ] `npm ci` in the root installs both apps; `frontend/package-lock.json` is gone.
-- [ ] `npm run dev:backend` starts the API on port 3000, and `GET /api/health` returns `200` with `"status": "ok"`.
-- [ ] With a missing or invalid `DATABASE_URL` or `PORT`, the API does not start and names the variable.
-- [ ] `npm run db:up` starts Postgres 18; it becomes healthy and accepts the `DATABASE_URL` from `.env.example`.
-- [ ] The frontend is unchanged: lint, typecheck, test and build are green, and the map works.
+- [x] `npm ci` in the root installs both apps; `frontend/package-lock.json` is gone.
+- [x] `npm run dev:backend` starts the API on port 3000, and `GET /api/health` returns `200` with `"status": "ok"`.
+- [x] With a missing or invalid `DATABASE_URL` or `PORT`, the API does not start and names the variable.
+- [x] `npm run db:up` starts Postgres 18; it becomes healthy and accepts the `DATABASE_URL` from `.env.example`.
+- [x] The frontend is unchanged: lint, typecheck, test and build are green, and the map works.
 - [ ] Both CI jobs are green.
 
 ## Decisions

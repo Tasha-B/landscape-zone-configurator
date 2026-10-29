@@ -13,16 +13,18 @@ React / TS frontend ──REST + WebSockets──▶ NestJS API ──▶ Postgr
 
 | Concern | Choice | Why |
 | --- | --- | --- |
-| Framework | **NestJS 11**, TypeScript | modules, dependency injection, guards and pipes; the common structure for Node APIs |
-| Database | **PostgreSQL 17** | relational data plus `jsonb` for zone geometry |
+| Framework | **NestJS 12**, TypeScript 6, ESM | modules, dependency injection, guards and pipes; the common structure for Node APIs |
+| Database | **PostgreSQL 18** | relational data plus `jsonb` for zone geometry |
 | ORM / migrations | **Prisma** | the schema is code, the client is typed, migrations and seeding come built in |
 | Validation | `class-validator` + global `ValidationPipe` | standard in Nest; DTOs also document the API |
 | API docs | `@nestjs/swagger` (OpenAPI) | Swagger UI, and frontend types generated with `openapi-typescript`, so one contract serves both apps |
 | Realtime | `@nestjs/websockets` + Socket.IO | broadcasts zone changes to everyone viewing a plan |
 | Config | `@nestjs/config` with env validation | the app refuses to start with a broken `.env` |
 | Health | `@nestjs/terminus` → `/api/health` | used by Docker healthchecks and the hosting platform |
-| Tests | Jest (unit) + Supertest (e2e against a real Postgres) | e2e runs in CI against a Postgres service container |
+| Tests | Vitest (unit) + Supertest (e2e against a real Postgres) | the same runner as the frontend; e2e runs in CI against a Postgres service container |
 | Frontend data layer | TanStack Query | caching, loading and error states, optimistic updates |
+
+NestJS 12, Vitest and PostgreSQL 18 replaced the originally planned NestJS 11, Jest and PostgreSQL 17 in phase 2, when the current releases came out ([phase-2-backend-scaffold.md](phase-2-backend-scaffold.md)).
 
 ## Data model
 
