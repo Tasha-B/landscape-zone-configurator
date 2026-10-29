@@ -29,6 +29,13 @@ describe("demo plan seed (e2e)", () => {
     await prisma.$disconnect();
   });
 
+  it("has a fixed id for every demo zone", () => {
+    // A zone added to demoPlan needs a line in DEMO_ZONE_IDS; the seed refuses
+    // to run without it rather than give the zone a new random id each time
+    const missing = demoPlan.zones.map((zone) => zone.id).filter((id) => !DEMO_ZONE_IDS[id]);
+    expect(missing).toEqual([]);
+  });
+
   it("stores the demo plan exactly as the frontend defines it", async () => {
     await seedDemoPlan(prisma);
 
@@ -71,10 +78,11 @@ describe("demo plan seed (e2e)", () => {
     await seedDemoPlan(prisma);
     await seedDemoPlan(prisma);
 
+    // Derived from demoPlan, so adding or removing a demo zone keeps this valid
     expect(await prisma.floorPlan.count()).toBe(1);
     const zones = await prisma.zone.findMany({ select: { id: true }, orderBy: { position: "asc" } });
-    expect(zones.map((zone) => zone.id)).toEqual(Object.values(DEMO_ZONE_IDS));
-    expect(await prisma.zoneContent.count()).toBe(10);
+    expect(zones.map((zone) => zone.id)).toEqual(demoPlan.zones.map((zone) => DEMO_ZONE_IDS[zone.id]));
+    expect(await prisma.zoneContent.count()).toBe(demoPlan.zones.length * 2);
   });
 
   it("leaves other plans alone", async () => {
