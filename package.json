@@ -16,6 +16,7 @@
     "db:down": "docker compose down",
     "db:migrate": "npm run db:migrate -w backend --",
     "db:deploy": "npm run db:deploy -w backend --",
+    "db:seed": "npm run db:seed -w backend --",
     "db:studio": "npm run db:studio -w backend --",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",

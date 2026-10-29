@@ -108,6 +108,7 @@ model ZoneContent {
 - **Fixed UUIDs.** The plan and its five zones get UUIDs written in the seed, mapped from the frontend ids (`reception` → a fixed UUID). Reseeding gives the same ids, so URLs and later references stay valid.
 - **Idempotent.** The seed deletes the demo plan, if present, and recreates it in one transaction. Zones and content cascade, and other plans are not touched.
 - **Run with `tsx`.** The generated client is TypeScript whose imports use `.js` extensions. Node's built-in type stripping cannot run it, and `tsx` can. The seed has no decorators, so it does not need decorator metadata.
+- **Type-checked as tooling.** The app follows Node's ESM rules (`moduleResolution: nodenext`), but the frontend's files use extensionless imports and live outside `backend/`. The backend's TypeScript config is split, like the frontend's: `tsconfig.app.json` checks `src/` with Node's rules, and `tsconfig.tools.json` checks the seed, tests and configs, which tsx and Vitest run, with bundler resolution. *(Added during step 3.)*
 
 ## API changes
 

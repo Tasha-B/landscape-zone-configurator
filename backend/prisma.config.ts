@@ -10,6 +10,9 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
+    // tsx runs TypeScript directly; Node's own type stripping cannot follow
+    // the generated client's .js imports
+    seed: "tsx prisma/seed.ts",
   },
   datasource: {
     url: process.env.DATABASE_URL,
