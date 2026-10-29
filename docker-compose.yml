@@ -1,0 +1,34 @@
+# Local development services. For now only PostgreSQL: the API and the
+# frontend run on the host with `npm run dev:*`; their containers come in
+# phase 8.
+#
+#   npm run db:up     start Postgres and wait until it is healthy
+#   npm run db:down   stop it (the data volume is kept)
+
+name: landscape-zone-configurator
+
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      # Local development only, not secrets. backend/.env.example holds the
+      # matching DATABASE_URL.
+      POSTGRES_USER: lzc
+      POSTGRES_PASSWORD: lzc
+      POSTGRES_DB: lzc
+    ports:
+      # Set DB_PORT if 5432 is taken on the host, and change DATABASE_URL to match
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      # Postgres 18 images keep data in a versioned subdirectory
+      # (/var/lib/postgresql/18/docker), so the volume mounts the parent
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lzc -d lzc"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  pgdata:
