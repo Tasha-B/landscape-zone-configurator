@@ -42,3 +42,37 @@ jobs:
 
       - name: Build
         run: npm run build -w frontend
+
+  backend:
+    # Runs in parallel with the frontend job. No path filter: a required
+    # check that never runs would block every PR.
+    name: Backend — lint, typecheck, test, build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint -w backend
+
+      - name: Typecheck
+        run: npm run typecheck -w backend
+
+      - name: Unit tests
+        run: npm test -w backend
+
+      # No database yet: the e2e config sets a placeholder DATABASE_URL.
+      # A Postgres service container joins when tests start using it.
+      - name: E2E tests
+        run: npm run test:e2e -w backend
+
+      - name: Build
+        run: npm run build -w backend
