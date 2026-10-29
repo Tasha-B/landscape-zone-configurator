@@ -7,6 +7,8 @@ dist-ssr/
 build/
 coverage/
 *.tsbuildinfo
+# Generated Prisma client (rebuilt by `prisma generate` on npm install)
+backend/src/generated/
 
 # Env files (keep the example)
 .env

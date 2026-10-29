@@ -1,0 +1,14 @@
+// Database schema. The models come in the next step; see
+// docs/phase-3-database-plan.md.
+
+generator client {
+  // Prisma 7 generates the client as TypeScript into src/, not into
+  // node_modules. The folder is ignored by git and rebuilt by
+  // `prisma generate`, which runs on npm install.
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
