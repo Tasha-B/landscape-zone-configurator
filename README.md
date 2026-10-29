@@ -31,12 +31,13 @@ docs/       project documentation
 
 ## Run locally
 
+The repo is an npm workspace: install and run everything from the root.
+
 ```bash
-cd frontend
-npm install
-npm run dev
+npm install            # installs every app from the root package-lock.json
+npm run dev:frontend   # Vite dev server
 ```
 
-Other scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm test` (Vitest, single run), `npm run test:watch`, `npm run preview`.
+Root scripts `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` run in every app. To target one app, add `-w <app>`, for example `npm run test:watch -w frontend` or `npm run preview -w frontend`.
 
 CI (GitHub Actions) runs lint, typecheck, tests and build for the frontend on every pull request and on every push to `main`.
