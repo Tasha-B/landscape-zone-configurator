@@ -132,6 +132,28 @@ REST stays the source of truth. The gateway only broadcasts changes that have al
 
 Phases 8 and 9 can move up to right after phase 3. Every PR after that then goes through CI, which shows the DevOps side of the project from early on.
 
+## Open questions
+
+Questions that are not decided yet but block a later phase. Each one is settled in the plan of the phase named in it, and moves into that plan's decisions.
+
+### 1. The background of plans other than the demo office
+
+*Raised 2026-10-29. Decide when planning phase 4, before phase 6 at the latest.*
+
+Zones are data, but everything around them is not. Walls, doors, furniture, trees and the "tap a zone" arrow are static SVG in `PlanBackground.tsx`, drawn for the demo office. A second plan, created through the API (phase 5) or the editor (phase 6), would get its own zones but the demo office's walls behind them. This roadmap originally listed walls as data as out of scope, because it assumed a single office.
+
+Options:
+
+| Option | What it takes | Trade-off |
+| --- | --- | --- |
+| A. Background image per plan | Upload an SVG or PNG floor plan, stored with the plan and drawn under the zones, scaled to its `viewBox` | Works with any existing drawing; the background cannot be edited in the app |
+| B. Walls as data | New models for walls, doors and furniture, drawn and edited like zones | Fully editable and consistent in style; a large addition to the data model, the API and the editor |
+| C. Blank sheet | Plans other than the demo show their zones on the paper texture only | No extra work; a plan without walls is hard to read |
+
+A starting point is to begin with C or A and keep B for later. The demo office stays as it is in every option.
+
+Related: the reception hint is also tied to the demo office artwork, and marker strokes are seeded by zone id. Both are described in the notes for phase 4 in [phase-3-database-plan.md](phase-3-database-plan.md).
+
 ## Docs naming
 
 Each phase gets its own docs in `docs/`, named after its number and slug:
