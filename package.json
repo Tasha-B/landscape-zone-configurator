@@ -3,13 +3,15 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "frontend"
+    "frontend",
+    "backend"
   ],
   "engines": {
     "node": ">=24.15"
   },
   "scripts": {
     "dev:frontend": "npm run dev -w frontend --",
+    "dev:backend": "npm run start:dev -w backend --",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
