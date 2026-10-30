@@ -1,0 +1,74 @@
+// Floor plans and their zones. The shape follows the frontend model in
+// frontend/src/lib/plan/types.ts; see docs/phase-3-database-plan.md for
+// the differences from the roadmap.
+
+generator client {
+  // Prisma 7 generates the client as TypeScript into src/, not into
+  // node_modules. The folder is ignored by git and rebuilt by
+  // `prisma generate`, which runs on npm install.
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Stored as the frontend's strings ("meeting-room"); the Prisma client
+// exposes them as MEETING_ROOM
+enum ZoneType {
+  RECEPTION        @map("reception")
+  MEETING_ROOM     @map("meeting-room")
+  OPEN_FLOOR       @map("open-floor")
+  BREAK_ROOM       @map("break-room")
+  SIGNATURE_CORNER @map("signature-corner")
+  CUSTOM           @map("custom")
+}
+
+enum Lang {
+  en
+  ru
+}
+
+model FloorPlan {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String
+  viewBox    Float[] // [minX, minY, width, height]
+  pxPerMeter Float
+  zones      Zone[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Zone {
+  id         String        @id @default(uuid()) @db.Uuid
+  plan       FloorPlan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  planId     String        @db.Uuid
+  type       ZoneType
+  // Shape from the frontend model: rect | circle | polygon. Always read and
+  // written whole; validated at the API boundary (phase 5)
+  shape      Json
+  color      String
+  zIndex     Int // paint and tab order
+  position   Int // legend order (FloorPlan.zones array order in the frontend)
+  hitPadding Int? // null = the frontend default (20)
+  label      Json? // { dx, dy, fontSize?, areaDy? }
+  version    Int           @default(1) // optimistic concurrency (phase 5)
+  content    ZoneContent[]
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([planId])
+}
+
+model ZoneContent {
+  zone           Zone   @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  zoneId         String @db.Uuid
+  lang           Lang
+  name           String
+  tagline        String
+  recommendation String
+  rationale      String
+
+  @@id([zoneId, lang])
+}

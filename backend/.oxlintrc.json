@@ -1,7 +1,13 @@
 {
   "$schema": "../node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "oxc"],
+  "plugins": [
+    "typescript",
+    "oxc"
+  ],
   "env": {
     "node": true
-  }
+  },
+  "ignorePatterns": [
+    "src/generated/**"
+  ]
 }

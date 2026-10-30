@@ -25,7 +25,7 @@ export class Env {
   @Max(65535)
   PORT: number = 3000;
 
-  // Used from phase 3 (Prisma), required now so .env.example is complete
+  // PrismaService connects with it
   @IsUrl({ protocols: ["postgresql", "postgres"], require_tld: false, require_protocol: true })
   DATABASE_URL!: string;
 }

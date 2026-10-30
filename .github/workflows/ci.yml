@@ -49,6 +49,29 @@ jobs:
     name: Backend — lint, typecheck, test, build
     runs-on: ubuntu-latest
 
+    # The e2e tests need Postgres: the same image as docker-compose.yml, with
+    # the test database created up front
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: lzc
+          POSTGRES_PASSWORD: lzc
+          POSTGRES_DB: lzc_test
+        ports:
+          - 5432:5432
+        # Steps start only once the service reports healthy
+        options: >-
+          --health-cmd "pg_isready -U lzc -d lzc_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    # Wins over the default in vitest.config.e2e.ts. There is no backend/.env
+    # in CI, and prisma.config.ts does not override what is set here.
+    env:
+      DATABASE_URL: postgresql://lzc:lzc@localhost:5432/lzc_test
+
     steps:
       - uses: actions/checkout@v5
 
@@ -69,8 +92,11 @@ jobs:
       - name: Unit tests
         run: npm test -w backend
 
-      # No database yet: the e2e config sets a placeholder DATABASE_URL.
-      # A Postgres service container joins when tests start using it.
+      # The e2e setup applies them as well; a separate step makes a broken
+      # migration show up as such, not as a failing test run
+      - name: Apply migrations
+        run: npm run db:deploy -w backend
+
       - name: E2E tests
         run: npm run test:e2e -w backend
 

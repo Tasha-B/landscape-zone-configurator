@@ -1,0 +1,16 @@
+{
+  // Code that tsx and Vitest run, not Node directly: the seed, tests and
+  // configs. They resolve imports the way bundlers do, which also lets the
+  // seed import the demo plan from the frontend (extensionless imports,
+  // outside backend/). The app itself is checked by tsconfig.app.json.
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "rootDir": "..",
+    "noEmit": true,
+    "declaration": false,
+    "incremental": false
+  },
+  "include": ["prisma", "test", "prisma.config.ts", "vitest.config.ts", "vitest.config.e2e.ts"]
+}
