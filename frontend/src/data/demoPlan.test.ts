@@ -3,7 +3,9 @@ import { translations, type Lang } from "../lib/i18n/translations";
 import { area, bounds, center, scanlineIntervals } from "../lib/plan/geometry";
 import { generateMarkerStrokes } from "../lib/plan/markers";
 import type { Point, Shape } from "../lib/plan/types";
-import { demoPlan } from "./demoPlan";
+// The demo data lives with the database seed; the checks need the
+// frontend's geometry, so they stay here
+import { demoPlan } from "../../../backend/prisma/demo-plan-data";
 
 const zone = (id: string) => demoPlan.zones.find((z) => z.id === id)!;
 

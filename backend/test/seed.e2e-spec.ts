@@ -1,7 +1,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { demoPlan } from "../../frontend/src/data/demoPlan.js";
-import { DEMO_PLAN_ID, DEMO_ZONE_IDS, seedDemoPlan } from "../prisma/demo-plan.js";
+import { DEMO_BACKGROUND, DEMO_PLAN_ID, DEMO_ZONE_IDS, seedDemoPlan } from "../prisma/demo-plan.js";
+import { demoPlan } from "../prisma/demo-plan-data.js";
 import { PrismaClient, ZoneType } from "../src/generated/prisma/client.js";
 
 const zoneTypeNames = Object.fromEntries(
@@ -72,6 +72,8 @@ describe("demo plan seed (e2e)", () => {
       pxPerMeter: demoPlan.pxPerMeter,
       zones: demoPlan.zones.map((zone) => ({ ...zone, id: DEMO_ZONE_IDS[zone.id] })),
     });
+    // Not part of the frontend model: the frontend picks its artwork by it
+    expect(plan.background).toBe(DEMO_BACKGROUND);
   });
 
   it("replaces the demo plan when run again, keeping its ids", async () => {

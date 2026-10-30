@@ -35,6 +35,10 @@ model FloorPlan {
   name       String
   viewBox    Float[] // [minX, minY, width, height]
   pxPerMeter Float
+  // What the frontend draws behind the zones: "demo-office" for the demo
+  // office's artwork, null for a blank sheet. Later also uploaded images,
+  // so the database does not restrict the values (the API does, phase 5)
+  background String?
   zones      Zone[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

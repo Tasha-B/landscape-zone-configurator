@@ -9,12 +9,13 @@ import SpaceMapperSheet from "./SpaceMapperSheet";
 import { useLanguage } from "../../lib/i18n/LanguageProvider";
 import { useSelection } from "../../lib/selection/SelectionProvider";
 import type { Zone } from "../../lib/plan/types";
-import { demoPlan } from "../../data/demoPlan";
+import { demoPlan } from "../../../../backend/prisma/demo-plan-data";
 import { usePrefersReducedMotion } from "../../lib/usePrefersReducedMotion";
 import SectionNumber from "../SectionNumber/SectionNumber";
 import Button from "../Button/Button";
 
-// Zones come from the static demo plan until phase 4 loads plans from the API
+// The static demo plan, read from the seed data until the plan comes from
+// the API (phase 4, step 5)
 const plan = demoPlan;
 
 export default function SpaceMapper() {

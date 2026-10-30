@@ -1,7 +1,9 @@
-import type { FloorPlan } from "../lib/plan/types";
+// The frontend's model; type-only, so nothing of the frontend is loaded
+import type { FloorPlan } from "../../frontend/src/lib/plan/types.js";
 
-// The Cairn Botanics office from phase 0 as one FloorPlan. It becomes the
-// database seed in phase 3.
+// The Cairn Botanics office from phase 0 as one FloorPlan: the data of the
+// database seed (demo-plan.ts). The frontend's demoPlan.test.ts checks it
+// against the frontend's geometry.
 //
 // Coordinates are in the 800 × 600 viewBox of the sketch. Zones are inset
 // from the wall lines (6 from the outer wall, 8 from inner walls), so the

@@ -30,7 +30,8 @@ const HINT_FADE_S = 2.2;
 export const HINT_TOTAL_S = HINT_DRAW_S + HINT_HOLD_S + HINT_FADE_S;
 
 // A zone's hit area reaches this far past its outline unless the zone sets
-// its own hitPadding (the signature corner uses 0, see demoPlan)
+// its own hitPadding (the signature corner uses 0, see the demo data in
+// backend/prisma/demo-plan-data.ts)
 const DEFAULT_HIT_PADDING = 20;
 const HOVER_TINT_ALPHA = 0.12;
 const LABEL_FONT_SIZE = 22;
