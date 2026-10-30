@@ -31,6 +31,7 @@ docs/       project documentation
 - [Phase 2 — Backend scaffold](docs/phase-2-backend-scaffold.md): versions, env validation, health, local Postgres, CI and findings
 - [Phase 3 — Database: plan](docs/phase-3-database-plan.md): Prisma 7 schema, first migration, seed from the demo plan, database health check
 - [Phase 3 — Database](docs/phase-3-database.md): Prisma 7 setup, schema, seed, `PrismaService` and health, CI with Postgres, findings
+- [Phase 4 — Read API: plan](docs/phase-4-read-api-plan.md): `GET /api/plans/:id`, Swagger, generated types, the frontend on TanStack Query, plan backgrounds
 
 ## Run locally
 
