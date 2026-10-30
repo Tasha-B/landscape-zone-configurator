@@ -15,7 +15,7 @@ React / TS frontend ──REST + WebSockets──▶ NestJS API ──▶ Postgr
 | --- | --- | --- |
 | Framework | **NestJS 12**, TypeScript 6, ESM | modules, dependency injection, guards and pipes; the common structure for Node APIs |
 | Database | **PostgreSQL 18** | relational data plus `jsonb` for zone geometry |
-| ORM / migrations | **Prisma** | the schema is code, the client is typed, migrations and seeding come built in |
+| ORM / migrations | **Prisma 7** | the schema is code, the client is typed, migrations and seeding come built in |
 | Validation | `class-validator` + global `ValidationPipe` | standard in Nest; DTOs also document the API |
 | API docs | `@nestjs/swagger` (OpenAPI) | Swagger UI, and frontend types generated with `openapi-typescript`, so one contract serves both apps |
 | Realtime | `@nestjs/websockets` + Socket.IO | broadcasts zone changes to everyone viewing a plan |
@@ -29,47 +29,56 @@ NestJS 12, Vitest and PostgreSQL 18 replaced the originally planned NestJS 11, J
 ## Data model
 
 ```
-FloorPlan     id uuid · name · viewBox · pxPerMeter · createdAt · updatedAt
+FloorPlan     id uuid · name · viewBox float[4] · pxPerMeter · createdAt · updatedAt
    │ 1:N
-Zone          id uuid · planId · type (enum) · shape jsonb · color · zIndex · version · createdAt · updatedAt
+Zone          id uuid · planId · type (enum) · shape jsonb · color · zIndex · position · hitPadding? · label jsonb? · version · createdAt · updatedAt
    │ 1:N
-ZoneContent   (zoneId, lang) PK · name · tagline · recommendation · rationale
+ZoneContent   (zoneId, lang enum) PK · name · tagline · recommendation · rationale
 ```
 
-Prisma sketch:
+The schema as built in phase 3 (`backend/prisma/schema.prisma`). Compared with the first sketch it adds `position`, `hitPadding` and `label`, makes `viewBox` a typed array and `lang` an enum, and stores zone types as the frontend's strings. [phase-3-database-plan.md](phase-3-database-plan.md#schema) explains each change.
 
 ```prisma
 model FloorPlan {
   id         String   @id @default(uuid()) @db.Uuid
   name       String
-  viewBox    Json     // [minX, minY, width, height]
+  viewBox    Float[]  // [minX, minY, width, height]; a CHECK keeps it at 4
   pxPerMeter Float
   zones      Zone[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
 
+// Stored as the frontend's strings ("meeting-room")
 enum ZoneType {
-  RECEPTION
-  MEETING_ROOM
-  OPEN_FLOOR
-  BREAK_ROOM
-  SIGNATURE_CORNER
-  CUSTOM
+  RECEPTION        @map("reception")
+  MEETING_ROOM     @map("meeting-room")
+  OPEN_FLOOR       @map("open-floor")
+  BREAK_ROOM       @map("break-room")
+  SIGNATURE_CORNER @map("signature-corner")
+  CUSTOM           @map("custom")
+}
+
+enum Lang {
+  en
+  ru
 }
 
 model Zone {
-  id        String        @id @default(uuid()) @db.Uuid
-  plan      FloorPlan     @relation(fields: [planId], references: [id], onDelete: Cascade)
-  planId    String        @db.Uuid
-  type      ZoneType
-  shape     Json          // { kind: "rect", ... } | { kind: "circle", ... } | { kind: "polygon", ... }
-  color     String
-  zIndex    Int
-  version   Int           @default(1)
-  content   ZoneContent[]
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id         String        @id @default(uuid()) @db.Uuid
+  plan       FloorPlan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  planId     String        @db.Uuid
+  type       ZoneType
+  shape      Json          // { kind: "rect", ... } | { kind: "circle", ... } | { kind: "polygon", ... }
+  color      String
+  zIndex     Int           // paint and tab order
+  position   Int           // legend order
+  hitPadding Int?          // null = the frontend default (20)
+  label      Json?         // { dx, dy, fontSize?, areaDy? }
+  version    Int           @default(1)
+  content    ZoneContent[]
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
 
   @@index([planId])
 }
@@ -77,7 +86,7 @@ model Zone {
 model ZoneContent {
   zone           Zone   @relation(fields: [zoneId], references: [id], onDelete: Cascade)
   zoneId         String @db.Uuid
-  lang           String // "en" | "ru"
+  lang           Lang
   name           String
   tagline        String
   recommendation String

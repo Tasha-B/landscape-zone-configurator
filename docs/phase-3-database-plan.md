@@ -1,6 +1,6 @@
 # Phase 3 — Database: plan
 
-Part of the [roadmap](phase-0-roadmap.md). The result will be recorded in `phase-3-database.md`.
+Part of the [roadmap](phase-0-roadmap.md). The result is recorded in [phase-3-database.md](phase-3-database.md).
 
 ## Goal
 
@@ -113,7 +113,7 @@ model ZoneContent {
 ## API changes
 
 - **`PrismaModule` (global) with `PrismaService`.** It extends the generated `PrismaClient` and builds the `PrismaPg` adapter from the validated `DATABASE_URL` (`ConfigService`, not `process.env`). It disconnects on shutdown.
-- **`/api/health` pings the database** with terminus's `PrismaHealthIndicator`, or with a one-line `SELECT 1` indicator if that does not work with the Prisma 7 client. With the database up it returns `200 {"status":"ok","info":{"database":{"status":"up"}}}`; with the database down it returns `503`.
+- **`/api/health` pings the database** with terminus's `PrismaHealthIndicator`, or with a one-line `SELECT 1` indicator if that does not work with the Prisma 7 client. With the database up it returns `200 {"status":"ok","info":{"database":{"status":"up"}}}`; with the database down it returns `503`. *(Done: terminus's indicator works with the Prisma 7 client, so no own indicator was needed.)*
 
 ## Databases
 
@@ -142,17 +142,17 @@ Each step is a separate commit, and both apps build after every one.
 1. **Prisma setup.** Install `prisma@7.10.1`, `@prisma/client@7.10.1`, `@prisma/adapter-pg`, `pg` and `tsx`. Add `prisma.config.ts`, an empty schema with the datasource and generator, `postinstall: prisma generate`, and ignore `src/generated/` in git. Check that `generate` also works in CI, where there is no `.env`.
 2. **Schema and first migration.** Add the models above and run `prisma migrate dev --name init`. Commit `prisma/migrations/`. Check the SQL: enums, the cascades, the composite key of `ZoneContent`, the `planId` index.
 3. **Seed.** Write `prisma/seed.ts` from `demoPlan` with fixed UUIDs. Add a test that seeds `lzc_test`, reads the plan back through Prisma and compares it field by field with `demoPlan`: shapes, colors, `zIndex`, legend order, `hitPadding`, labels, both languages.
-4. **PrismaService and health.** Add `PrismaModule`, `PrismaService` and the database indicator. Unit tests run without a database; e2e tests run against `lzc_test`: health is `up` with the database and `503` with an unreachable one.
-5. **CI.** Add a `postgres:18-alpine` service to the backend job, run `db:deploy` before the e2e tests, and set `DATABASE_URL` to the service. The job keeps its name, which is a required check.
+4. **PrismaService and health.** Add `PrismaModule`, `PrismaService` and the database indicator. Unit tests run without a database; e2e tests run against `lzc_test`: health is `up` with the database and `503` with an unreachable one. *(Done. The unit test was rewritten in step 5: Prisma reports a refused connection differently on Windows and Linux.)*
+5. **CI.** Add a `postgres:18-alpine` service to the backend job, run `db:deploy` before the e2e tests, and set `DATABASE_URL` to the service. The job keeps its name, which is a required check. *(Done: checked with actionlint and a Linux container run of the whole job.)*
 6. **Docs.** Write `phase-3-database.md`, update the roadmap's data model with the schema changes above, and update the README (database status, `db:*` scripts).
 
 ## Acceptance criteria
 
-- [ ] `npm run db:up && npm run db:deploy -w backend && npm run db:seed -w backend` on an empty volume creates the tables and the demo office.
-- [ ] Running the seed twice leaves exactly one demo plan with five zones, with the same ids.
-- [ ] The seed round-trip test passes: the stored plan equals `demoPlan`.
-- [ ] `GET /api/health` returns `200` with `database: up` while Postgres runs, and `503` when it is stopped.
-- [ ] `npm ci` without a `.env` (as in CI) generates the Prisma client, and typecheck and build pass.
+- [x] `npm run db:up && npm run db:deploy -w backend && npm run db:seed -w backend` on an empty volume creates the tables and the demo office.
+- [x] Running the seed twice leaves exactly one demo plan with five zones, with the same ids.
+- [x] The seed round-trip test passes: the stored plan equals `demoPlan`.
+- [x] `GET /api/health` returns `200` with `database: up` while Postgres runs, and `503` when it is stopped.
+- [x] `npm ci` without a `.env` (as in CI) generates the Prisma client, and typecheck and build pass.
 - [ ] Both CI jobs are green, and the backend job runs its e2e tests against a Postgres service.
 
 ## Decisions
