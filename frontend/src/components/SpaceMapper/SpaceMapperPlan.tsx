@@ -1,9 +1,10 @@
 import { useMemo, type CSSProperties, type ReactNode, type SVGAttributes } from "react";
 import { motion } from "framer-motion";
-import { PlanAnnotations, PlanBackground, HINT_ZONE_ID } from "./PlanBackground";
+import { PlanAnnotations, PlanBackground } from "./PlanBackground";
 import type { Lang, Translations } from "../../lib/i18n/translations";
 import { area, center, padShape } from "../../lib/plan/geometry";
 import { generateMarkerStrokes, MARKER_STROKE_WIDTH, type MarkerStroke } from "../../lib/plan/markers";
+import { hintZoneId } from "../../lib/plan/hint";
 import type { FloorPlan, Shape } from "../../lib/plan/types";
 
 const MARKER_DRAW_DURATION = 0.3;
@@ -11,23 +12,28 @@ const MARKER_STAGGER = 0.04;
 const MARKER_FADE_DURATION = 0.25;
 export const MARKER_OPACITY_SELECTED = 0.32;
 // A hint, not a stand-in for selection — half the real selected opacity,
-// same multiplier/opacity every zone (including Reception) uses once truly
-// selected, so nothing reads "more selected than the rest" (see markerState
-// below — Reception's own selected state never overrides this).
+// same multiplier/opacity every zone (including the hint zone) uses once
+// truly selected, so nothing reads "more selected than the rest" (see
+// markerState below — the hint zone's own selected state never overrides
+// this).
 const MARKER_OPACITY_HINT = MARKER_OPACITY_SELECTED * 0.5;
 
-// Click-affordance: Reception's marker plays a one-shot, self-clearing demo
-// the first time the map section enters the viewport — draws in, holds,
-// fades back to the same clean default every other unselected zone has.
-// Not persistent: nothing lingers after it fades, and it never repeats.
-// The zone is HINT_ZONE_ID from PlanBackground, where the hint arrow is
-// drawn. Exported so SpaceMapper.tsx can drive the viewport-trigger
-// timeline that hands `hintActive` down to this plan.
+// Click-affordance: the hint zone's marker plays a one-shot, self-clearing
+// demo the first time the map section enters the viewport — draws in,
+// holds, fades back to the same clean default every other unselected zone
+// has. Not persistent: nothing lingers after it fades, and it never repeats.
+// Exported so SpaceMapper.tsx can drive the viewport-trigger timeline that
+// hands `hintActive` down to this plan.
 export const HINT_DELAY_MS = 800;
 const HINT_DRAW_S = 1.6;
 export const HINT_HOLD_S = 2.5;
 const HINT_FADE_S = 2.2;
 export const HINT_TOTAL_S = HINT_DRAW_S + HINT_HOLD_S + HINT_FADE_S;
+
+// The paper sheet the plan is drawn on; also the frame of the loading and
+// error states, so the page does not jump when the plan arrives
+export const PAPER_SHEET_CLASS =
+  "border border-[#2A2620]/[0.12] bg-paper shadow-[0_1px_2px_rgba(27,46,31,0.08),0_6px_14px_rgba(27,46,31,0.07),0_22px_44px_rgba(27,46,31,0.09)]";
 
 // A zone's hit area reaches this far past its outline unless the zone sets
 // its own hitPadding (the signature corner uses 0, see the demo data in
@@ -205,11 +211,11 @@ interface SpaceMapperPlanProps {
 // Single SVG plan, rendered in one of two modes so the markup never has to
 // be duplicated between the desktop map and the mobile preview/sheet views
 // (batch K, item 3): `interactive` is the map as it always was — clickable
-// hit-areas, hover tint, the Reception hint cycle; `preview` strips all of
-// that down to a static picture (no hit-areas/hover/click, markers render
-// at their current opacity with no draw/fade animation and never show the
-// Reception hint, since the hint's viewport trigger lives with the
-// interactive instance only).
+// hit-areas, hover tint, the hint cycle; `preview` strips all of that down
+// to a static picture (no hit-areas/hover/click, markers render at their
+// current opacity with no draw/fade animation and never show the hint,
+// since the hint's viewport trigger lives with the interactive instance
+// only).
 //
 // Everything per zone comes from `plan`; the artwork around the zones is
 // PlanBackground.
@@ -235,10 +241,11 @@ export default function SpaceMapperPlan({
     () => new Map(plan.zones.map((zone) => [zone.id, generateMarkerStrokes(zone.shape, zone.id)])),
     [plan],
   );
+  const hintZone = hintZoneId(plan);
 
   return (
     <div
-      className="border border-[#2A2620]/[0.12] bg-paper shadow-[0_1px_2px_rgba(27,46,31,0.08),0_6px_14px_rgba(27,46,31,0.07),0_22px_44px_rgba(27,46,31,0.09)]"
+      className={PAPER_SHEET_CLASS}
       style={{ padding, transform: rotate ? "rotate(-0.4deg)" : undefined }}
     >
       <svg
@@ -259,7 +266,7 @@ export default function SpaceMapperPlan({
             ? "preview"
             : isSelected
               ? "selected"
-              : id === HINT_ZONE_ID && hintActive
+              : id === hintZone && hintActive
                 ? "hint"
                 : "none";
           const content = zone.content[lang];

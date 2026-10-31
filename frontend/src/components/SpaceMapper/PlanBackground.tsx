@@ -4,10 +4,6 @@ import type { Lang, Translations } from "../../lib/i18n/translations";
 // zones that come from the FloorPlan. Walls and furniture are not data;
 // they become data only if the editor needs them.
 
-// The zone the "tap a zone →" annotation points at, and the one whose
-// marker plays the one-shot hint. Must be a real zone id of the plan.
-export const HINT_ZONE_ID = "reception";
-
 // Walls, doors, furniture and trees. Drawn after the zones, so walls sit on
 // top of the marker strokes.
 export function PlanBackground() {
@@ -118,7 +114,7 @@ export function PlanAnnotations({ lang, t }: PlanAnnotationsProps) {
       <path d="M 172 72 C 158 84 150 96 146 110" fill="none" stroke="#2A2620" strokeWidth={1.2} opacity={0.6} />
       <path d="M 140 102 L 146 111 L 152 103" fill="none" stroke="#2A2620" strokeWidth={1.2} opacity={0.6} />
 
-      {/* Click-affordance hint, pointing at Reception — same
+      {/* Click-affordance hint, pointing at the plan as a whole — same
           handwritten-annotation-with-arrow treatment as the hero
           illustration's "one deliberate specimen" note. Thin
           underline (not the thick highlighter stroke used
