@@ -1,6 +1,6 @@
 # Phase 4 — Read API: plan
 
-Part of the [roadmap](phase-0-roadmap.md). The result will be recorded in `phase-4-read-api.md`.
+Part of the [roadmap](phase-0-roadmap.md). The result is recorded in [phase-4-read-api.md](phase-4-read-api.md).
 
 ## Goal
 
@@ -132,18 +132,18 @@ Each step is a separate commit, and both apps build after every one.
 2. **Schema and data.** Add `background` and its migration; move the demo data into the backend; the seed sets `background`; `demoPlan.test.ts` follows the data.
 3. **`GET /api/plans/:id`.** `PlansModule`, DTOs, mapper. E2E against the seeded `lzc_test`: the response, mapped back, equals the demo data; `404` for an unknown UUID; `400` for `abc`.
 4. **Swagger and the contract.** Swagger UI at `/api/docs`; `api:spec` and `api:types` scripts; the committed `openapi.json` and `schema.d.ts`; CI steps that fail when either is stale. `openapi-typescript` goes into the backend with the root `overrides` entry described above.
-5. **Frontend data layer.** TanStack Query, the proxy, `fetchPlan` and `toFloorPlan` with unit tests, loading and error states. The page renders the plan from the API.
-6. **Background, annotations and hint.** The `background` switch, annotations placed from the `viewBox`, the hint on the first zone. Screenshots before and after.
+5. **Frontend data layer.** TanStack Query, the proxy, `fetchPlan` and `toFloorPlan` with unit tests, loading and error states. The page renders the plan from the API. *(Done, together with the hint on the first zone from step 6: zone ids became UUIDs here.)*
+6. **Background, annotations and hint.** The `background` switch, annotations placed from the `viewBox`, the hint on the first zone. Screenshots before and after. *(Done; the palette is anchored too. The screenshots are byte-identical to step 5.)*
 7. **Docs.** `phase-4-read-api.md`, the roadmap (API and status), the README (both servers for local development, `api:*` scripts).
 
 ## Acceptance criteria
 
-- [ ] With the database seeded and both dev servers running, the page shows the demo office loaded from `/api/plans/:id`; there is no `demoPlan` import left in the frontend's app code.
-- [ ] The demo office looks as before, except for the marker strokes; selection, hover, legend, keyboard, the mobile sheet and the hint work.
-- [ ] With the API stopped, the page shows the error state, and "Try again" loads the plan once the API is back.
-- [ ] A plan with `background: null` shows its zones on a blank sheet, with the hint on its first zone (checked by changing the field in `lzc` by hand).
-- [ ] `GET /api/plans/:id` answers `200`, `404` and `400` as above; Swagger UI lists the endpoint and the three shape schemas.
-- [ ] Changing a response field in the backend without regenerating fails CI; regenerating and not updating the frontend fails the frontend typecheck.
+- [x] With the database seeded and both dev servers running, the page shows the demo office loaded from `/api/plans/:id`; there is no `demoPlan` import left in the frontend's app code.
+- [x] The demo office looks as before, except for the marker strokes; selection, hover, legend, keyboard, the mobile sheet and the hint work.
+- [x] With the API stopped, the page shows the error state, and "Try again" loads the plan once the API is back.
+- [x] A plan with `background: null` shows its zones on a blank sheet, with the hint on its first zone (checked by changing the field in `lzc` by hand).
+- [x] `GET /api/plans/:id` answers `200`, `404` and `400` as above; Swagger UI lists the endpoint and the three shape schemas.
+- [x] Changing a response field in the backend without regenerating fails CI; regenerating and not updating the frontend fails the frontend typecheck.
 - [ ] Both CI jobs are green.
 
 ## Out of scope

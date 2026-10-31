@@ -29,14 +29,14 @@ NestJS 12, Vitest and PostgreSQL 18 replaced the originally planned NestJS 11, J
 ## Data model
 
 ```
-FloorPlan     id uuid · name · viewBox float[4] · pxPerMeter · createdAt · updatedAt
+FloorPlan     id uuid · name · viewBox float[4] · pxPerMeter · background? · createdAt · updatedAt
    │ 1:N
 Zone          id uuid · planId · type (enum) · shape jsonb · color · zIndex · position · hitPadding? · label jsonb? · version · createdAt · updatedAt
    │ 1:N
 ZoneContent   (zoneId, lang enum) PK · name · tagline · recommendation · rationale
 ```
 
-The schema as built in phase 3 (`backend/prisma/schema.prisma`). Compared with the first sketch it adds `position`, `hitPadding` and `label`, makes `viewBox` a typed array and `lang` an enum, and stores zone types as the frontend's strings. [phase-3-database-plan.md](phase-3-database-plan.md#schema) explains each change.
+The schema as built in phase 3 (`backend/prisma/schema.prisma`). Compared with the first sketch it adds `position`, `hitPadding` and `label`, makes `viewBox` a typed array and `lang` an enum, and stores zone types as the frontend's strings. [phase-3-database-plan.md](phase-3-database-plan.md#schema) explains each change. Phase 4 added `background`: what the frontend draws behind the zones ([phase-4-read-api-plan.md](phase-4-read-api-plan.md#decisions-taken-before-the-plan)).
 
 ```prisma
 model FloorPlan {
@@ -44,6 +44,7 @@ model FloorPlan {
   name       String
   viewBox    Float[]  // [minX, minY, width, height]; a CHECK keeps it at 4
   pxPerMeter Float
+  background String?  // "demo-office" or null (a blank sheet); later uploaded images
   zones      Zone[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -114,8 +115,10 @@ POST   /api/plans/:id/zones       add a zone
 PATCH  /api/zones/:id             update a zone (requires version, 409 on conflict)
 DELETE /api/zones/:id             delete a zone
 GET    /api/health                healthcheck
-GET    /api/docs                  Swagger UI
+GET    /api/docs                  Swagger UI (the document at /api/docs-json)
 ```
+
+Built so far: `GET /api/plans/:id`, `/api/health` and `/api/docs` (phase 4). The OpenAPI document is committed as `backend/openapi.json`, and the frontend's types are generated from it ([phase-4-read-api.md](phase-4-read-api.md#contract-openapi--frontend-types)).
 
 WebSocket namespace `/plans`:
 
