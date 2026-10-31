@@ -25,6 +25,7 @@ export function toFloorPlan(plan: PlanResponse): FloorPlan {
     name: plan.name,
     viewBox: plan.viewBox,
     pxPerMeter: plan.pxPerMeter,
+    ...(plan.background !== null && { background: plan.background }),
     zones: plan.zones.map(toZone),
   };
 }

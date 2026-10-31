@@ -1,12 +1,16 @@
 import type { Lang, Translations } from "../../lib/i18n/translations";
+import { anchorTransform } from "../../lib/plan/anchor";
+import type { FloorPlan } from "../../lib/plan/types";
 
-// Static artwork of the demo office (viewBox 0 0 800 600), drawn around the
-// zones that come from the FloorPlan. Walls and furniture are not data;
-// they become data only if the editor needs them.
+// The plan's `background` that draws the demo office's artwork. Any other
+// value, and none, leaves a blank sheet behind the zones.
+export const DEMO_OFFICE = "demo-office";
 
-// Walls, doors, furniture and trees. Drawn after the zones, so walls sit on
-// top of the marker strokes.
-export function PlanBackground() {
+// Static artwork of the demo office (viewBox 0 0 800 600): walls, doors,
+// furniture and trees. Drawn after the zones, so walls sit on top of the
+// marker strokes.
+export function PlanBackground({ background }: { background?: string }) {
+  if (background !== DEMO_OFFICE) return null;
   return (
     <>
       <defs>
@@ -99,67 +103,83 @@ export function PlanBackground() {
 }
 
 interface PlanAnnotationsProps {
+  viewBox: FloorPlan["viewBox"];
+  background?: string;
   lang: Lang;
   t: Translations;
 }
 
-// Handwritten notes around the plan: entry, tap hint, compass, sheet title.
-// Drawn last, on top of everything.
-export function PlanAnnotations({ lang, t }: PlanAnnotationsProps) {
+// Handwritten notes around the plan. Drawn last, on top of everything. The
+// entry note belongs to the demo office's artwork; the others are drawn on
+// every plan, each group anchored to an edge of its viewBox (see anchor.ts).
+export function PlanAnnotations({ viewBox, background, lang, t }: PlanAnnotationsProps) {
   return (
     <g aria-hidden="true" className="font-marker" style={{ pointerEvents: "none", userSelect: "none" }}>
-      <text x={180} y={66} textAnchor="middle" fontSize={17} fill="#2A2620">
-        {t.map.entry}
-      </text>
-      <path d="M 172 72 C 158 84 150 96 146 110" fill="none" stroke="#2A2620" strokeWidth={1.2} opacity={0.6} />
-      <path d="M 140 102 L 146 111 L 152 103" fill="none" stroke="#2A2620" strokeWidth={1.2} opacity={0.6} />
+      {/* Points at the demo office's door */}
+      {background === DEMO_OFFICE && (
+        <>
+          <text x={180} y={66} textAnchor="middle" fontSize={17} fill="#2A2620">
+            {t.map.entry}
+          </text>
+          <path d="M 172 72 C 158 84 150 96 146 110" fill="none" stroke="#2A2620" strokeWidth={1.2} opacity={0.6} />
+          <path d="M 140 102 L 146 111 L 152 103" fill="none" stroke="#2A2620" strokeWidth={1.2} opacity={0.6} />
+        </>
+      )}
 
-      {/* Click-affordance hint, pointing at the plan as a whole — same
-          handwritten-annotation-with-arrow treatment as the hero
-          illustration's "one deliberate specimen" note. Thin
-          underline (not the thick highlighter stroke used
-          elsewhere) so the hint reads more noticeably as "read
-          me" without competing with the marker-highlight strokes. */}
-      <g transform="rotate(-2 390 52)">
-        <text
-          x={390}
-          y={52}
-          textAnchor="middle"
-          fontSize={18}
-          fill="#796034"
-        >
-          {t.map.tapHint}
-        </text>
-        {/* Measured text width differs a lot by language (EN
-            ~82px, RU ~110px) — a fixed underline would either
-            overshoot EN or clip RU, so it's sized per language
-            rather than eyeballed to one of them. */}
-        <line
-          x1={390 - (lang === "ru" ? 59 : 45)}
-          y1={58}
-          x2={390 + (lang === "ru" ? 59 : 45)}
-          y2={58}
-          stroke="#796034"
-          strokeWidth={1}
-          opacity={0.6}
-        />
+      <g transform={anchorTransform(viewBox, { x: "center", y: "top" })}>
+        {/* Click-affordance hint, pointing at the plan as a whole — same
+            handwritten-annotation-with-arrow treatment as the hero
+            illustration's "one deliberate specimen" note. Thin
+            underline (not the thick highlighter stroke used
+            elsewhere) so the hint reads more noticeably as "read
+            me" without competing with the marker-highlight strokes. */}
+        <g transform="rotate(-2 390 52)">
+          <text
+            x={390}
+            y={52}
+            textAnchor="middle"
+            fontSize={18}
+            fill="#796034"
+          >
+            {t.map.tapHint}
+          </text>
+          {/* Measured text width differs a lot by language (EN
+              ~82px, RU ~110px) — a fixed underline would either
+              overshoot EN or clip RU, so it's sized per language
+              rather than eyeballed to one of them. */}
+          <line
+            x1={390 - (lang === "ru" ? 59 : 45)}
+            y1={58}
+            x2={390 + (lang === "ru" ? 59 : 45)}
+            y2={58}
+            stroke="#796034"
+            strokeWidth={1}
+            opacity={0.6}
+          />
+        </g>
+        <path d="M 350 66 C 300 73 240 92 200 113" fill="none" stroke="#796034" strokeWidth={1.2} opacity={0.5} />
+        <path d="M 210 105 L 200 113 L 211 119" fill="none" stroke="#796034" strokeWidth={1.2} opacity={0.5} />
       </g>
-      <path d="M 350 66 C 300 73 240 92 200 113" fill="none" stroke="#796034" strokeWidth={1.2} opacity={0.5} />
-      <path d="M 210 105 L 200 113 L 211 119" fill="none" stroke="#796034" strokeWidth={1.2} opacity={0.5} />
 
-      <line x1={742} y1={66} x2={742} y2={40} stroke="#2A2620" strokeWidth={1.4} opacity={0.7} />
-      <path d="M 736 46 L 742 37 L 748 46" fill="none" stroke="#2A2620" strokeWidth={1.4} opacity={0.7} />
-      <text x={742} y={30} textAnchor="middle" fontSize={17} fill="#2A2620">
-        N
-      </text>
+      {/* Compass */}
+      <g transform={anchorTransform(viewBox, { x: "right", y: "top" })}>
+        <line x1={742} y1={66} x2={742} y2={40} stroke="#2A2620" strokeWidth={1.4} opacity={0.7} />
+        <path d="M 736 46 L 742 37 L 748 46" fill="none" stroke="#2A2620" strokeWidth={1.4} opacity={0.7} />
+        <text x={742} y={30} textAnchor="middle" fontSize={17} fill="#2A2620">
+          N
+        </text>
+      </g>
 
-      <line x1={58} y1={549} x2={380} y2={547} stroke="#C9A25C" strokeWidth={10} strokeLinecap="round" opacity={0.3} />
-      <text x={60} y={542} fontSize={24} fill="#2A2620">
-        {t.map.sheetTitle}
-      </text>
-      <text x={60} y={568} fontSize={15} fill="rgba(42,38,32,0.6)">
-        {t.map.note}
-      </text>
+      {/* Sheet title and note */}
+      <g transform={anchorTransform(viewBox, { x: "left", y: "bottom" })}>
+        <line x1={58} y1={549} x2={380} y2={547} stroke="#C9A25C" strokeWidth={10} strokeLinecap="round" opacity={0.3} />
+        <text x={60} y={542} fontSize={24} fill="#2A2620">
+          {t.map.sheetTitle}
+        </text>
+        <text x={60} y={568} fontSize={15} fill="rgba(42,38,32,0.6)">
+          {t.map.note}
+        </text>
+      </g>
     </g>
   );
 }

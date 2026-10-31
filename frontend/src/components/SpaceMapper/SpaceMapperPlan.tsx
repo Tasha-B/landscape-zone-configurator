@@ -4,6 +4,7 @@ import { PlanAnnotations, PlanBackground } from "./PlanBackground";
 import type { Lang, Translations } from "../../lib/i18n/translations";
 import { area, center, padShape } from "../../lib/plan/geometry";
 import { generateMarkerStrokes, MARKER_STROKE_WIDTH, type MarkerStroke } from "../../lib/plan/markers";
+import { anchorTransform } from "../../lib/plan/anchor";
 import { hintZoneId } from "../../lib/plan/hint";
 import type { FloorPlan, Shape } from "../../lib/plan/types";
 
@@ -218,7 +219,7 @@ interface SpaceMapperPlanProps {
 // only).
 //
 // Everything per zone comes from `plan`; the artwork around the zones is
-// PlanBackground.
+// PlanBackground, chosen by the plan's `background`.
 export default function SpaceMapperPlan({
   plan,
   mode,
@@ -305,38 +306,41 @@ export default function SpaceMapperPlan({
           );
         })}
 
-        <PlanBackground />
+        <PlanBackground background={plan.background} />
 
         {/* Palette swatch — zone marker colors as a legend, top-right under
             the compass, in plan order. Hidden inside the mobile sheet
             (showPalette=false): it reads as illegible clutter at that width
             and the viewBox can't change, so the space is just left empty
-            rather than rescaling anything around it. */}
+            rather than rescaling anything around it. Anchored to the
+            top-right corner, like the compass. */}
         {showPalette && (
-          <g aria-hidden="true" transform="rotate(-2 630 128)" style={{ pointerEvents: "none" }}>
-            <text x={605} y={84} className="font-marker" fontSize={16} fill="#2A2620">
-              {t.map.paletteLabel}
-            </text>
-            {plan.zones.map((zone, index) => {
-              const y = PALETTE_FIRST_Y + index * PALETTE_STEP_Y;
-              return (
-                <g key={zone.id}>
-                  <line
-                    x1={610}
-                    y1={y}
-                    x2={652}
-                    y2={y}
-                    stroke={zone.color}
-                    strokeWidth={14}
-                    opacity={0.45}
-                    strokeLinecap="round"
-                  />
-                  <text x={662} y={y + 4} className="font-marker" fontSize={13} fill="rgba(42,38,32,0.55)">
-                    {zone.color.slice(1).toUpperCase()}
-                  </text>
-                </g>
-              );
-            })}
+          <g aria-hidden="true" transform={anchorTransform(plan.viewBox, { x: "right", y: "top" })}>
+            <g transform="rotate(-2 630 128)" style={{ pointerEvents: "none" }}>
+              <text x={605} y={84} className="font-marker" fontSize={16} fill="#2A2620">
+                {t.map.paletteLabel}
+              </text>
+              {plan.zones.map((zone, index) => {
+                const y = PALETTE_FIRST_Y + index * PALETTE_STEP_Y;
+                return (
+                  <g key={zone.id}>
+                    <line
+                      x1={610}
+                      y1={y}
+                      x2={652}
+                      y2={y}
+                      stroke={zone.color}
+                      strokeWidth={14}
+                      opacity={0.45}
+                      strokeLinecap="round"
+                    />
+                    <text x={662} y={y + 4} className="font-marker" fontSize={13} fill="rgba(42,38,32,0.55)">
+                      {zone.color.slice(1).toUpperCase()}
+                    </text>
+                  </g>
+                );
+              })}
+            </g>
           </g>
         )}
 
@@ -366,7 +370,7 @@ export default function SpaceMapperPlan({
           })}
         </g>
 
-        <PlanAnnotations lang={lang} t={t} />
+        <PlanAnnotations viewBox={plan.viewBox} background={plan.background} lang={lang} t={t} />
       </svg>
     </div>
   );

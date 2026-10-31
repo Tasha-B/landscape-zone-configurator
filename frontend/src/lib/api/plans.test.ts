@@ -41,6 +41,7 @@ describe("toFloorPlan", () => {
       name: "Office",
       viewBox: [0, 0, 800, 600],
       pxPerMeter: 32,
+      background: "demo-office",
       zones: [
         {
           id: "00000000-0000-4000-8000-000000000101",
@@ -60,6 +61,7 @@ describe("toFloorPlan", () => {
     const [mapped] = toFloorPlan(plan([zone()])).zones;
     expect(mapped).not.toHaveProperty("hitPadding");
     expect(mapped).not.toHaveProperty("label");
+    expect(toFloorPlan({ ...plan([]), background: null })).not.toHaveProperty("background");
   });
 
   it("keeps the zones in the API's order (legend order)", () => {
