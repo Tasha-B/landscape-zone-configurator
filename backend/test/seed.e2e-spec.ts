@@ -1,19 +1,9 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { demoPlan } from "../../frontend/src/data/demoPlan.js";
-import { DEMO_PLAN_ID, DEMO_ZONE_IDS, seedDemoPlan } from "../prisma/demo-plan.js";
-import { PrismaClient, ZoneType } from "../src/generated/prisma/client.js";
-
-const zoneTypeNames = Object.fromEntries(
-  Object.entries({
-    reception: ZoneType.RECEPTION,
-    "meeting-room": ZoneType.MEETING_ROOM,
-    "open-floor": ZoneType.OPEN_FLOOR,
-    "break-room": ZoneType.BREAK_ROOM,
-    "signature-corner": ZoneType.SIGNATURE_CORNER,
-    custom: ZoneType.CUSTOM,
-  }).map(([name, value]) => [value, name]),
-);
+import { DEMO_BACKGROUND, DEMO_PLAN_ID, DEMO_ZONE_IDS, seedDemoPlan } from "../prisma/demo-plan.js";
+import { demoPlan } from "../prisma/demo-plan-data.js";
+import { PrismaClient } from "../src/generated/prisma/client.js";
+import { ZONE_TYPE_NAMES } from "../src/plans/zone-type.js";
 
 describe("demo plan seed (e2e)", () => {
   let prisma: PrismaClient;
@@ -51,7 +41,7 @@ describe("demo plan seed (e2e)", () => {
       pxPerMeter: plan.pxPerMeter,
       zones: plan.zones.map((zone) => ({
         id: zone.id,
-        type: zoneTypeNames[zone.type],
+        type: ZONE_TYPE_NAMES[zone.type],
         shape: zone.shape,
         color: zone.color,
         zIndex: zone.zIndex,
@@ -72,6 +62,8 @@ describe("demo plan seed (e2e)", () => {
       pxPerMeter: demoPlan.pxPerMeter,
       zones: demoPlan.zones.map((zone) => ({ ...zone, id: DEMO_ZONE_IDS[zone.id] })),
     });
+    // Not part of the frontend model: the frontend picks its artwork by it
+    expect(plan.background).toBe(DEMO_BACKGROUND);
   });
 
   it("replaces the demo plan when run again, keeping its ids", async () => {

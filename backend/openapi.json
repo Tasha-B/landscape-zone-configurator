@@ -1,0 +1,570 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "health_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The Health Check is successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok",
+                        "degraded"
+                      ],
+                      "example": "ok"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {},
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The Health Check is not successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error",
+                        "shutting_down"
+                      ],
+                      "example": "error"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect",
+                          "responseTime": 3005
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        },
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect",
+                          "responseTime": 3005
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/api/plans/{id}": {
+      "get": {
+        "operationId": "plans_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The plan with its zones in legend order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The id is not a UUID"
+          },
+          "404": {
+            "description": "No plan has this id"
+          }
+        },
+        "tags": [
+          "plans"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Landscape Zone Configurator API",
+    "description": "Floor plans and their zones",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "RectShape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "rect"
+            ]
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          },
+          "width": {
+            "type": "number"
+          },
+          "height": {
+            "type": "number"
+          },
+          "rx": {
+            "type": "number",
+            "description": "Corner radius"
+          }
+        },
+        "required": [
+          "kind",
+          "x",
+          "y",
+          "width",
+          "height",
+          "rx"
+        ]
+      },
+      "CircleShape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "circle"
+            ]
+          },
+          "cx": {
+            "type": "number"
+          },
+          "cy": {
+            "type": "number"
+          },
+          "r": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "kind",
+          "cx",
+          "cy",
+          "r"
+        ]
+      },
+      "PolygonShape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "polygon"
+            ]
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "description": "Curves are approximated by points"
+          }
+        },
+        "required": [
+          "kind",
+          "points"
+        ]
+      },
+      "ZoneType": {
+        "type": "string",
+        "enum": [
+          "reception",
+          "meeting-room",
+          "open-floor",
+          "break-room",
+          "signature-corner",
+          "custom"
+        ]
+      },
+      "ZoneLabel": {
+        "type": "object",
+        "properties": {
+          "dx": {
+            "type": "number",
+            "description": "Offset of the name from the shape center"
+          },
+          "dy": {
+            "type": "number"
+          },
+          "fontSize": {
+            "type": "number"
+          },
+          "areaDy": {
+            "type": "number",
+            "description": "Offset of the area caption below the name; the frontend default is 22"
+          }
+        },
+        "required": [
+          "dx",
+          "dy"
+        ]
+      },
+      "ZoneContentResponse": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "tagline": {
+            "type": "string"
+          },
+          "recommendation": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "tagline",
+          "recommendation",
+          "rationale"
+        ]
+      },
+      "ZoneContentByLang": {
+        "type": "object",
+        "properties": {
+          "en": {
+            "$ref": "#/components/schemas/ZoneContentResponse"
+          },
+          "ru": {
+            "$ref": "#/components/schemas/ZoneContentResponse"
+          }
+        },
+        "required": [
+          "en",
+          "ru"
+        ]
+      },
+      "ZoneResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ZoneType"
+              }
+            ]
+          },
+          "shape": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RectShape"
+              },
+              {
+                "$ref": "#/components/schemas/CircleShape"
+              },
+              {
+                "$ref": "#/components/schemas/PolygonShape"
+              }
+            ],
+            "discriminator": {
+              "propertyName": "kind",
+              "mapping": {
+                "rect": "#/components/schemas/RectShape",
+                "circle": "#/components/schemas/CircleShape",
+                "polygon": "#/components/schemas/PolygonShape"
+              }
+            }
+          },
+          "color": {
+            "type": "string",
+            "description": "Marker, hover tint and legend swatch"
+          },
+          "zIndex": {
+            "type": "integer",
+            "description": "Paint and tab order"
+          },
+          "hitPadding": {
+            "type": "integer",
+            "nullable": true,
+            "description": "null: the frontend default (20)"
+          },
+          "label": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ZoneLabel"
+              }
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "description": "Increases with every change (optimistic concurrency)"
+          },
+          "content": {
+            "$ref": "#/components/schemas/ZoneContentByLang"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "shape",
+          "color",
+          "zIndex",
+          "hitPadding",
+          "label",
+          "version",
+          "content"
+        ]
+      },
+      "PlanResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "viewBox": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 4,
+            "maxItems": 4,
+            "description": "[minX, minY, width, height]"
+          },
+          "pxPerMeter": {
+            "type": "number"
+          },
+          "background": {
+            "type": "string",
+            "nullable": true,
+            "description": "\"demo-office\": the demo office's artwork; null: a blank sheet"
+          },
+          "zones": {
+            "description": "Legend order",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ZoneResponse"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "viewBox",
+          "pxPerMeter",
+          "background",
+          "zones"
+        ]
+      }
+    }
+  }
+}

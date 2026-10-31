@@ -41,5 +41,8 @@ export interface FloorPlan {
   name: string;
   viewBox: [number, number, number, number];
   pxPerMeter: number;
+  // What is drawn behind the zones: "demo-office" for the demo office's
+  // artwork; left out for a blank sheet
+  background?: string;
   zones: Zone[]; // array order = legend order
 }

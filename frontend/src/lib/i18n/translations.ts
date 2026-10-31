@@ -21,6 +21,9 @@ export interface Translations {
     mobileSheetLabel: string;
     mobileSheetClose: string;
     mobileSheetDone: string;
+    loading: string;
+    loadError: string;
+    retry: string;
   };
 }
 
@@ -45,6 +48,9 @@ export const translations: Record<Lang, Translations> = {
       mobileSheetLabel: "Explore your space plan",
       mobileSheetClose: "Close",
       mobileSheetDone: "Done",
+      loading: "loading the plan…",
+      loadError: "The plan could not be loaded",
+      retry: "Try again",
     },
   },
   ru: {
@@ -67,6 +73,9 @@ export const translations: Record<Lang, Translations> = {
       mobileSheetLabel: "Изучить план пространства",
       mobileSheetClose: "Закрыть",
       mobileSheetDone: "Готово",
+      loading: "загружаем план…",
+      loadError: "Не удалось загрузить план",
+      retry: "Попробовать снова",
     },
   },
 };

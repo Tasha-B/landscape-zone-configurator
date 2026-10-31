@@ -153,7 +153,7 @@ Each step is a separate commit, and both apps build after every one.
 - [x] The seed round-trip test passes: the stored plan equals `demoPlan`.
 - [x] `GET /api/health` returns `200` with `database: up` while Postgres runs, and `503` when it is stopped.
 - [x] `npm ci` without a `.env` (as in CI) generates the Prisma client, and typecheck and build pass.
-- [ ] Both CI jobs are green, and the backend job runs its e2e tests against a Postgres service.
+- [x] Both CI jobs are green, and the backend job runs its e2e tests against a Postgres service.
 
 ## Decisions
 

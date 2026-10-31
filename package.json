@@ -18,9 +18,16 @@
     "db:deploy": "npm run db:deploy -w backend --",
     "db:seed": "npm run db:seed -w backend --",
     "db:studio": "npm run db:studio -w backend --",
+    "api:spec": "npm run api:spec -w backend",
+    "api:types": "npm run api:types -w backend",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "build": "npm run build --workspaces --if-present"
+  },
+  "overrides": {
+    "openapi-typescript": {
+      "typescript": "^6.0.2"
+    }
   }
 }

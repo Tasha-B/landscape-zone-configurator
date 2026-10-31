@@ -3,21 +3,48 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import RecommendationCard from "./RecommendationCard";
 import SpaceMapperPlan, { HINT_DELAY_MS, HINT_HOLD_S, HINT_TOTAL_S } from "./SpaceMapperPlan";
-import { HINT_ZONE_ID } from "./PlanBackground";
+import PlanStatus from "./PlanStatus";
 import SpaceMapperPanel from "./SpaceMapperPanel";
 import SpaceMapperSheet from "./SpaceMapperSheet";
+import { PLAN_ID } from "../../config";
+import { usePlan } from "../../lib/api/plans";
 import { useLanguage } from "../../lib/i18n/LanguageProvider";
+import type { Translations } from "../../lib/i18n/translations";
 import { useSelection } from "../../lib/selection/SelectionProvider";
-import type { Zone } from "../../lib/plan/types";
-import { demoPlan } from "../../data/demoPlan";
+import { hintZoneId } from "../../lib/plan/hint";
+import type { FloorPlan, Zone } from "../../lib/plan/types";
 import { usePrefersReducedMotion } from "../../lib/usePrefersReducedMotion";
 import SectionNumber from "../SectionNumber/SectionNumber";
 import Button from "../Button/Button";
 
-// Zones come from the static demo plan until phase 4 loads plans from the API
-const plan = demoPlan;
-
+// Loads the plan from the API. Until it arrives the section shows its
+// heading and a blank sheet; the map itself, and the hint's viewport
+// trigger with it, mount only with the plan.
 export default function SpaceMapper() {
+  const { t } = useLanguage();
+  const { data: plan, isError, isFetching, refetch } = usePlan(PLAN_ID);
+
+  if (plan) return <SpaceMapperLoaded plan={plan} />;
+
+  return (
+    <section id="map">
+      <SpaceMapperHeading t={t} />
+      <PlanStatus t={t} error={isError && !isFetching} onRetry={() => void refetch()} />
+    </section>
+  );
+}
+
+function SpaceMapperHeading({ t }: { t: Translations }) {
+  return (
+    <>
+      <SectionNumber number="01" />
+      <h2 className="font-display text-section text-forest-dark">{t.map.title}</h2>
+      <p className="mt-sm max-w-[36rem] font-body text-body text-ink/70">{t.map.intro}</p>
+    </>
+  );
+}
+
+function SpaceMapperLoaded({ plan }: { plan: FloorPlan }) {
   const { lang, t } = useLanguage();
   const { selectedZones: selectedIds, toggle: toggleZone, clear: clearSelection } = useSelection();
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -26,15 +53,16 @@ export default function SpaceMapper() {
     .map((id) => plan.zones.find((zone) => zone.id === id))
     .filter((zone): zone is Zone => Boolean(zone));
 
-  // Reception's one-shot demo cycle. `hintActive` is render-read state; the
-  // two refs are only ever touched from the viewport callback and its own
-  // nested timeouts (never from a click handler reachable through the zone
-  // `.map()` below), so React Compiler's "no ref access during render"
+  // The hint zone's one-shot demo cycle. `hintActive` is render-read state;
+  // the two refs are only ever touched from the viewport callback and its
+  // own nested timeouts (never from a click handler reachable through the
+  // zone `.map()` below), so React Compiler's "no ref access during render"
   // check stays satisfied. `hintFiredRef` guards the viewport trigger
   // itself (belt-and-suspenders alongside framer-motion's own
-  // `viewport.once`); `hintSpentRef` is set the moment Reception is ever
-  // really selected, so a still-pending delay/hide timeout can't resurrect
-  // the hint afterwards (e.g. select-then-deselect within the 800ms delay).
+  // `viewport.once`); `hintSpentRef` is set the moment the hint zone is
+  // ever really selected, so a still-pending delay/hide timeout can't
+  // resurrect the hint afterwards (e.g. select-then-deselect within the
+  // 800ms delay).
   const [hintActive, setHintActive] = useState(false);
   const hintFiredRef = useRef(false);
   const hintSpentRef = useRef(false);
@@ -50,10 +78,11 @@ export default function SpaceMapper() {
   const sheetHintFiredRef = useRef(false);
 
   useEffect(() => {
-    if (selectedIds.includes(HINT_ZONE_ID)) {
+    const hintZone = hintZoneId(plan);
+    if (hintZone && selectedIds.includes(hintZone)) {
       hintSpentRef.current = true;
     }
-  }, [selectedIds]);
+  }, [selectedIds, plan]);
 
   function handleMapViewportEnter() {
     if (hintFiredRef.current) return;
@@ -86,9 +115,7 @@ export default function SpaceMapper() {
       onViewportEnter={handleMapViewportEnter}
       viewport={{ once: true, amount: 0.4 }}
     >
-      <SectionNumber number="01" />
-      <h2 className="font-display text-section text-forest-dark">{t.map.title}</h2>
-      <p className="mt-sm max-w-[36rem] font-body text-body text-ink/70">{t.map.intro}</p>
+      <SpaceMapperHeading t={t} />
 
       {/* < 640px: collapsed preview card + "Explore the plan" pill (batch K,
           item 3, stages 2-3). Both the card and the pill open the bottom

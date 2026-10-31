@@ -29,14 +29,14 @@ NestJS 12, Vitest and PostgreSQL 18 replaced the originally planned NestJS 11, J
 ## Data model
 
 ```
-FloorPlan     id uuid · name · viewBox float[4] · pxPerMeter · createdAt · updatedAt
+FloorPlan     id uuid · name · viewBox float[4] · pxPerMeter · background? · createdAt · updatedAt
    │ 1:N
 Zone          id uuid · planId · type (enum) · shape jsonb · color · zIndex · position · hitPadding? · label jsonb? · version · createdAt · updatedAt
    │ 1:N
 ZoneContent   (zoneId, lang enum) PK · name · tagline · recommendation · rationale
 ```
 
-The schema as built in phase 3 (`backend/prisma/schema.prisma`). Compared with the first sketch it adds `position`, `hitPadding` and `label`, makes `viewBox` a typed array and `lang` an enum, and stores zone types as the frontend's strings. [phase-3-database-plan.md](phase-3-database-plan.md#schema) explains each change.
+The schema as built in phase 3 (`backend/prisma/schema.prisma`). Compared with the first sketch it adds `position`, `hitPadding` and `label`, makes `viewBox` a typed array and `lang` an enum, and stores zone types as the frontend's strings. [phase-3-database-plan.md](phase-3-database-plan.md#schema) explains each change. Phase 4 added `background`: what the frontend draws behind the zones ([phase-4-read-api-plan.md](phase-4-read-api-plan.md#decisions-taken-before-the-plan)).
 
 ```prisma
 model FloorPlan {
@@ -44,6 +44,7 @@ model FloorPlan {
   name       String
   viewBox    Float[]  // [minX, minY, width, height]; a CHECK keeps it at 4
   pxPerMeter Float
+  background String?  // "demo-office" or null (a blank sheet); later uploaded images
   zones      Zone[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -114,8 +115,10 @@ POST   /api/plans/:id/zones       add a zone
 PATCH  /api/zones/:id             update a zone (requires version, 409 on conflict)
 DELETE /api/zones/:id             delete a zone
 GET    /api/health                healthcheck
-GET    /api/docs                  Swagger UI
+GET    /api/docs                  Swagger UI (the document at /api/docs-json)
 ```
+
+Built so far: `GET /api/plans/:id`, `/api/health` and `/api/docs` (phase 4). The OpenAPI document is committed as `backend/openapi.json`, and the frontend's types are generated from it ([phase-4-read-api.md](phase-4-read-api.md#contract-openapi--frontend-types)).
 
 WebSocket namespace `/plans`:
 
@@ -145,23 +148,11 @@ Phases 8 and 9 can move up to right after phase 3. Every PR after that then goes
 
 Questions that are not decided yet but block a later phase. Each one is settled in the plan of the phase named in it, and moves into that plan's decisions.
 
-### 1. The background of plans other than the demo office
+No question is open.
 
-*Raised 2026-10-29. Decide when planning phase 4, before phase 6 at the latest.*
+Decided:
 
-Zones are data, but everything around them is not. Walls, doors, furniture, trees and the "tap a zone" arrow are static SVG in `PlanBackground.tsx`, drawn for the demo office. A second plan, created through the API (phase 5) or the editor (phase 6), would get its own zones but the demo office's walls behind them. This roadmap originally listed walls as data as out of scope, because it assumed a single office.
-
-Options:
-
-| Option | What it takes | Trade-off |
-| --- | --- | --- |
-| A. Background image per plan | Upload an SVG or PNG floor plan, stored with the plan and drawn under the zones, scaled to its `viewBox` | Works with any existing drawing; the background cannot be edited in the app |
-| B. Walls as data | New models for walls, doors and furniture, drawn and edited like zones | Fully editable and consistent in style; a large addition to the data model, the API and the editor |
-| C. Blank sheet | Plans other than the demo show their zones on the paper texture only | No extra work; a plan without walls is hard to read |
-
-A starting point is to begin with C or A and keep B for later. The demo office stays as it is in every option.
-
-Related: the reception hint is also tied to the demo office artwork, and marker strokes are seeded by zone id. Both are described in the notes for phase 4 in [phase-3-database-plan.md](phase-3-database-plan.md).
+1. **The background of plans other than the demo office**: a blank sheet now, an uploaded image later, chosen by a `background` field of the plan. Decided 2026-10-30 in the [phase 4 plan](phase-4-read-api-plan.md#decisions-taken-before-the-plan).
 
 ## Docs naming
 

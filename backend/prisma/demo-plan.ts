@@ -1,7 +1,5 @@
-// The demo office from phase 1, loaded into the database. The data comes
-// from the frontend, so the office has one source until phase 4 moves it
-// into the backend.
-import { demoPlan } from "../../frontend/src/data/demoPlan.js";
+// The demo office from phase 1, loaded into the database
+import { demoPlan } from "./demo-plan-data.js";
 import { Lang, ZoneType, type PrismaClient } from "../src/generated/prisma/client.js";
 
 // Fixed ids: reseeding gives the same plan and zone ids, so URLs and later
@@ -15,6 +13,8 @@ export const DEMO_ZONE_IDS: Record<string, string> = {
   "break-room": "00000000-0000-4000-8000-000000000104",
   "signature-corner": "00000000-0000-4000-8000-000000000105",
 };
+
+export const DEMO_BACKGROUND = "demo-office";
 
 // The frontend's zone types are the strings the database stores; the
 // Prisma client names them in SCREAMING_CASE
@@ -38,6 +38,8 @@ export async function seedDemoPlan(prisma: PrismaClient): Promise<void> {
         name: demoPlan.name,
         viewBox: demoPlan.viewBox,
         pxPerMeter: demoPlan.pxPerMeter,
+        // The demo office's walls and furniture, drawn by the frontend
+        background: DEMO_BACKGROUND,
         zones: {
           create: demoPlan.zones.map((zone, position) => {
             const id = DEMO_ZONE_IDS[zone.id];
