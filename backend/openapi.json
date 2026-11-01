@@ -300,13 +300,18 @@
             "type": "number"
           },
           "width": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
           },
           "height": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
           },
           "rx": {
             "type": "number",
+            "minimum": 0,
             "description": "Corner radius"
           }
         },
@@ -335,7 +340,9 @@
             "type": "number"
           },
           "r": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
           }
         },
         "required": [
@@ -364,7 +371,7 @@
               "minItems": 2,
               "maxItems": 2
             },
-            "description": "Curves are approximated by points"
+            "description": "At least 3 points; curves are approximated by points"
           }
         },
         "required": [
@@ -394,7 +401,9 @@
             "type": "number"
           },
           "fontSize": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
           },
           "areaDy": {
             "type": "number",
@@ -406,20 +415,26 @@
           "dy"
         ]
       },
-      "ZoneContentResponse": {
+      "ZoneContent": {
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
           },
           "tagline": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
           },
           "recommendation": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "rationale": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           }
         },
         "required": [
@@ -433,10 +448,10 @@
         "type": "object",
         "properties": {
           "en": {
-            "$ref": "#/components/schemas/ZoneContentResponse"
+            "$ref": "#/components/schemas/ZoneContent"
           },
           "ru": {
-            "$ref": "#/components/schemas/ZoneContentResponse"
+            "$ref": "#/components/schemas/ZoneContent"
           }
         },
         "required": [

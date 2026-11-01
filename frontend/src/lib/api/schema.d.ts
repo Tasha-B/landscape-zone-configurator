@@ -69,7 +69,7 @@ export interface components {
              * @enum {string}
              */
             kind: "polygon";
-            /** @description Curves are approximated by points */
+            /** @description At least 3 points; curves are approximated by points */
             points: [
                 number,
                 number
@@ -85,15 +85,15 @@ export interface components {
             /** @description Offset of the area caption below the name; the frontend default is 22 */
             areaDy?: number;
         };
-        ZoneContentResponse: {
+        ZoneContent: {
             name: string;
             tagline: string;
             recommendation: string;
             rationale: string;
         };
         ZoneContentByLang: {
-            en: components["schemas"]["ZoneContentResponse"];
-            ru: components["schemas"]["ZoneContentResponse"];
+            en: components["schemas"]["ZoneContent"];
+            ru: components["schemas"]["ZoneContent"];
         };
         ZoneResponse: {
             /** Format: uuid */
