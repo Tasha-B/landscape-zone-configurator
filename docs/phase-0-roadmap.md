@@ -29,14 +29,14 @@ NestJS 12, Vitest and PostgreSQL 18 replaced the originally planned NestJS 11, J
 ## Data model
 
 ```
-FloorPlan     id uuid · name · viewBox float[4] · pxPerMeter · background? · createdAt · updatedAt
+FloorPlan     id uuid · name · viewBox float[4] · pxPerMeter · background? · version · createdAt · updatedAt
    │ 1:N
 Zone          id uuid · planId · type (enum) · shape jsonb · color · zIndex · position · hitPadding? · label jsonb? · version · createdAt · updatedAt
    │ 1:N
 ZoneContent   (zoneId, lang enum) PK · name · tagline · recommendation · rationale
 ```
 
-The schema as built in phase 3 (`backend/prisma/schema.prisma`). Compared with the first sketch it adds `position`, `hitPadding` and `label`, makes `viewBox` a typed array and `lang` an enum, and stores zone types as the frontend's strings. [phase-3-database-plan.md](phase-3-database-plan.md#schema) explains each change. Phase 4 added `background`: what the frontend draws behind the zones ([phase-4-read-api-plan.md](phase-4-read-api-plan.md#decisions-taken-before-the-plan)).
+The schema as built in phase 3 (`backend/prisma/schema.prisma`). Compared with the first sketch it adds `position`, `hitPadding` and `label`, makes `viewBox` a typed array and `lang` an enum, and stores zone types as the frontend's strings. [phase-3-database-plan.md](phase-3-database-plan.md#schema) explains each change. Phase 4 added `background`: what the frontend draws behind the zones ([phase-4-read-api-plan.md](phase-4-read-api-plan.md#decisions-taken-before-the-plan)). Phase 5 adds `version` to `FloorPlan`, so plans follow the same concurrency rule as zones ([phase-5-crud-plan.md](phase-5-crud-plan.md#decisions-taken-before-the-plan)).
 
 ```prisma
 model FloorPlan {
@@ -45,6 +45,7 @@ model FloorPlan {
   viewBox    Float[]  // [minX, minY, width, height]; a CHECK keeps it at 4
   pxPerMeter Float
   background String?  // "demo-office" or null (a blank sheet); later uploaded images
+  version    Int      @default(1)
   zones      Zone[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -101,7 +102,7 @@ Design decisions:
 
 - **Derived data is not stored.** Marker strokes, label positions and area are computed on the frontend from `shape` and `pxPerMeter`. A zone moved in the editor stays consistent automatically.
 - **`shape` is `jsonb`.** A zone is always read and written as a whole shape, never queried by individual coordinates. It is validated at the API boundary with a DTO per `kind`.
-- **Optimistic concurrency.** `PATCH` sends the `version` it was based on. If the stored version differs, the API returns `409 Conflict`; otherwise it increments the version.
+- **Optimistic concurrency.** `PATCH` of a plan or a zone sends the `version` it was based on. If the stored version differs, the API returns `409 Conflict`; otherwise it increments the version.
 
 ## API
 
@@ -109,7 +110,7 @@ Design decisions:
 GET    /api/plans                 list plans
 GET    /api/plans/:id             plan with zones and content
 POST   /api/plans                 create a plan
-PATCH  /api/plans/:id             update a plan
+PATCH  /api/plans/:id             update a plan (requires version, 409 on conflict)
 DELETE /api/plans/:id             delete a plan (zones cascade)
 POST   /api/plans/:id/zones       add a zone
 PATCH  /api/zones/:id             update a zone (requires version, 409 on conflict)
@@ -118,7 +119,7 @@ GET    /api/health                healthcheck
 GET    /api/docs                  Swagger UI (the document at /api/docs-json)
 ```
 
-Built so far: `GET /api/plans/:id`, `/api/health` and `/api/docs` (phase 4). The OpenAPI document is committed as `backend/openapi.json`, and the frontend's types are generated from it ([phase-4-read-api.md](phase-4-read-api.md#contract-openapi--frontend-types)).
+Built so far: every endpoint above. The read path, Swagger and health came in phase 4 ([phase-4-read-api.md](phase-4-read-api.md)), the writes in phase 5 ([phase-5-crud.md](phase-5-crud.md)); the WebSocket namespace below comes in phase 7. The OpenAPI document is committed as `backend/openapi.json`, and the frontend's types are generated from it ([phase-4-read-api.md](phase-4-read-api.md#contract-openapi--frontend-types)).
 
 WebSocket namespace `/plans`:
 
@@ -148,7 +149,7 @@ Phases 8 and 9 can move up to right after phase 3. Every PR after that then goes
 
 Questions that are not decided yet but block a later phase. Each one is settled in the plan of the phase named in it, and moves into that plan's decisions.
 
-No question is open.
+1. **The demo plan on a deployed API** (phase 9). Without auth, anyone who reaches a public API can change or delete the demo office, and the page then shows its error state. The options include making the demo plan read-only, reseeding it on a schedule or on start, or deploying the API only behind auth. Raised 2026-11-01 in the [phase 5 plan](phase-5-crud-plan.md#decisions-taken-before-the-plan), where the demo plan stays unprotected for local development.
 
 Decided:
 

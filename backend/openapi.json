@@ -237,6 +237,62 @@
         ]
       }
     },
+    "/api/plans": {
+      "get": {
+        "operationId": "plans_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Every plan, oldest first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlanSummaryResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "plans"
+        ]
+      },
+      "post": {
+        "operationId": "plans_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new plan, without zones, at version 1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is invalid"
+          }
+        },
+        "tags": [
+          "plans"
+        ]
+      }
+    },
     "/api/plans/{id}": {
       "get": {
         "operationId": "plans_findOne",
@@ -271,6 +327,202 @@
         "tags": [
           "plans"
         ]
+      },
+      "patch": {
+        "operationId": "plans_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The changed plan with its zones, at the next version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The id is not a UUID, the body is invalid or changes nothing"
+          },
+          "404": {
+            "description": "No plan has this id"
+          },
+          "409": {
+            "description": "The plan has changed since the version sent; reload it"
+          }
+        },
+        "tags": [
+          "plans"
+        ]
+      },
+      "delete": {
+        "operationId": "plans_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The plan and its zones are deleted"
+          },
+          "400": {
+            "description": "The id is not a UUID"
+          },
+          "404": {
+            "description": "No plan has this id"
+          }
+        },
+        "tags": [
+          "plans"
+        ]
+      }
+    },
+    "/api/plans/{id}/zones": {
+      "post": {
+        "operationId": "zones_create",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateZoneDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new zone, last in the legend, at version 1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZoneResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The id is not a UUID or the body is invalid"
+          },
+          "404": {
+            "description": "No plan has this id"
+          }
+        },
+        "tags": [
+          "zones"
+        ]
+      }
+    },
+    "/api/zones/{id}": {
+      "patch": {
+        "operationId": "zones_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateZoneDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The changed zone, at the next version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZoneResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The id is not a UUID, the body is invalid or changes nothing"
+          },
+          "404": {
+            "description": "No zone has this id"
+          },
+          "409": {
+            "description": "The zone has changed since the version sent; reload it"
+          }
+        },
+        "tags": [
+          "zones"
+        ]
+      },
+      "delete": {
+        "operationId": "zones_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The zone and its content are deleted"
+          },
+          "400": {
+            "description": "The id is not a UUID"
+          },
+          "404": {
+            "description": "No zone has this id"
+          }
+        },
+        "tags": [
+          "zones"
+        ]
       }
     }
   },
@@ -284,6 +536,36 @@
   "servers": [],
   "components": {
     "schemas": {
+      "PlanSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "background": {
+            "type": "string",
+            "nullable": true
+          },
+          "zoneCount": {
+            "type": "integer"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "background",
+          "zoneCount",
+          "updatedAt"
+        ]
+      },
       "RectShape": {
         "type": "object",
         "properties": {
@@ -300,13 +582,18 @@
             "type": "number"
           },
           "width": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
           },
           "height": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
           },
           "rx": {
             "type": "number",
+            "minimum": 0,
             "description": "Corner radius"
           }
         },
@@ -335,7 +622,9 @@
             "type": "number"
           },
           "r": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
           }
         },
         "required": [
@@ -364,7 +653,7 @@
               "minItems": 2,
               "maxItems": 2
             },
-            "description": "Curves are approximated by points"
+            "description": "At least 3 points; curves are approximated by points"
           }
         },
         "required": [
@@ -394,7 +683,9 @@
             "type": "number"
           },
           "fontSize": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
           },
           "areaDy": {
             "type": "number",
@@ -406,20 +697,26 @@
           "dy"
         ]
       },
-      "ZoneContentResponse": {
+      "ZoneContent": {
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
           },
           "tagline": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
           },
           "recommendation": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "rationale": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           }
         },
         "required": [
@@ -433,10 +730,10 @@
         "type": "object",
         "properties": {
           "en": {
-            "$ref": "#/components/schemas/ZoneContentResponse"
+            "$ref": "#/components/schemas/ZoneContent"
           },
           "ru": {
-            "$ref": "#/components/schemas/ZoneContentResponse"
+            "$ref": "#/components/schemas/ZoneContent"
           }
         },
         "required": [
@@ -548,6 +845,10 @@
             "nullable": true,
             "description": "\"demo-office\": the demo office's artwork; null: a blank sheet"
           },
+          "version": {
+            "type": "integer",
+            "description": "Increases with every change (optimistic concurrency)"
+          },
           "zones": {
             "description": "Legend order",
             "type": "array",
@@ -562,7 +863,241 @@
           "viewBox",
           "pxPerMeter",
           "background",
+          "version",
           "zones"
+        ]
+      },
+      "CreatePlanDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "viewBox": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 4,
+            "maxItems": 4,
+            "description": "[minX, minY, width, height]"
+          },
+          "pxPerMeter": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "viewBox units per meter"
+          },
+          "background": {
+            "type": "string",
+            "enum": [
+              "demo-office"
+            ],
+            "nullable": true,
+            "description": "null or left out: a blank sheet"
+          }
+        },
+        "required": [
+          "name",
+          "viewBox",
+          "pxPerMeter"
+        ]
+      },
+      "UpdatePlanDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "viewBox": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 4,
+            "maxItems": 4,
+            "description": "[minX, minY, width, height]"
+          },
+          "pxPerMeter": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "viewBox units per meter"
+          },
+          "background": {
+            "type": "string",
+            "enum": [
+              "demo-office"
+            ],
+            "nullable": true,
+            "description": "null or left out: a blank sheet"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The version the change is based on; 409 if it is stale"
+          }
+        },
+        "required": [
+          "version"
+        ]
+      },
+      "CreateZoneDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ZoneType"
+              }
+            ]
+          },
+          "shape": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RectShape"
+              },
+              {
+                "$ref": "#/components/schemas/CircleShape"
+              },
+              {
+                "$ref": "#/components/schemas/PolygonShape"
+              }
+            ],
+            "discriminator": {
+              "propertyName": "kind",
+              "mapping": {
+                "rect": "#/components/schemas/RectShape",
+                "circle": "#/components/schemas/CircleShape",
+                "polygon": "#/components/schemas/PolygonShape"
+              }
+            }
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "example": "#C9962A",
+            "description": "Marker, hover tint and legend swatch"
+          },
+          "zIndex": {
+            "type": "integer",
+            "description": "Paint and tab order; default: above the plan's other zones"
+          },
+          "hitPadding": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "description": "null: the frontend default (20)"
+          },
+          "label": {
+            "nullable": true,
+            "description": "null: placed at the shape center",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ZoneLabel"
+              }
+            ]
+          },
+          "content": {
+            "description": "Both languages: the frontend shows every zone in both",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ZoneContentByLang"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "shape",
+          "color",
+          "content"
+        ]
+      },
+      "ZoneContentPatch": {
+        "type": "object",
+        "properties": {
+          "en": {
+            "$ref": "#/components/schemas/ZoneContent"
+          },
+          "ru": {
+            "$ref": "#/components/schemas/ZoneContent"
+          }
+        }
+      },
+      "UpdateZoneDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ZoneType"
+              }
+            ]
+          },
+          "shape": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RectShape"
+              },
+              {
+                "$ref": "#/components/schemas/CircleShape"
+              },
+              {
+                "$ref": "#/components/schemas/PolygonShape"
+              }
+            ],
+            "discriminator": {
+              "propertyName": "kind",
+              "mapping": {
+                "rect": "#/components/schemas/RectShape",
+                "circle": "#/components/schemas/CircleShape",
+                "polygon": "#/components/schemas/PolygonShape"
+              }
+            }
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "example": "#C9962A",
+            "description": "Marker, hover tint and legend swatch"
+          },
+          "zIndex": {
+            "type": "integer",
+            "description": "Paint and tab order; default: above the plan's other zones"
+          },
+          "hitPadding": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "description": "null: the frontend default (20)"
+          },
+          "label": {
+            "nullable": true,
+            "description": "null: placed at the shape center",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ZoneLabel"
+              }
+            ]
+          },
+          "content": {
+            "$ref": "#/components/schemas/ZoneContentPatch"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The version the change is based on; 409 if it is stale"
+          }
+        },
+        "required": [
+          "version"
         ]
       }
     }

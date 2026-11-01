@@ -35,6 +35,7 @@ function plan(zones: PlanRow["zones"]): PlanRow {
     viewBox: [0, 0, 400, 300],
     pxPerMeter: 20,
     background: null,
+    version: 4,
     createdAt,
     updatedAt,
     zones,
@@ -53,6 +54,7 @@ describe("toPlanResponse", () => {
       viewBox: [0, 0, 400, 300],
       pxPerMeter: 20,
       background: null,
+      version: 4,
       zones: [
         {
           id: "a",

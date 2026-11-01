@@ -20,6 +20,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["plans_list"];
+        put?: never;
+        post: operations["plans_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/plans/{id}": {
         parameters: {
             query?: never;
@@ -30,16 +46,57 @@ export interface paths {
         get: operations["plans_findOne"];
         put?: never;
         post?: never;
+        delete: operations["plans_remove"];
+        options?: never;
+        head?: never;
+        patch: operations["plans_update"];
+        trace?: never;
+    };
+    "/api/plans/{id}/zones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["zones_create"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
+    "/api/zones/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["zones_remove"];
+        options?: never;
+        head?: never;
+        patch: operations["zones_update"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        PlanSummaryResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            background: string | null;
+            zoneCount: number;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         RectShape: {
             /**
              * @description discriminator enum property added by openapi-typescript
@@ -69,7 +126,7 @@ export interface components {
              * @enum {string}
              */
             kind: "polygon";
-            /** @description Curves are approximated by points */
+            /** @description At least 3 points; curves are approximated by points */
             points: [
                 number,
                 number
@@ -85,15 +142,15 @@ export interface components {
             /** @description Offset of the area caption below the name; the frontend default is 22 */
             areaDy?: number;
         };
-        ZoneContentResponse: {
+        ZoneContent: {
             name: string;
             tagline: string;
             recommendation: string;
             rationale: string;
         };
         ZoneContentByLang: {
-            en: components["schemas"]["ZoneContentResponse"];
-            ru: components["schemas"]["ZoneContentResponse"];
+            en: components["schemas"]["ZoneContent"];
+            ru: components["schemas"]["ZoneContent"];
         };
         ZoneResponse: {
             /** Format: uuid */
@@ -125,8 +182,85 @@ export interface components {
             pxPerMeter: number;
             /** @description "demo-office": the demo office's artwork; null: a blank sheet */
             background: string | null;
+            /** @description Increases with every change (optimistic concurrency) */
+            version: number;
             /** @description Legend order */
             zones: components["schemas"]["ZoneResponse"][];
+        };
+        CreatePlanDto: {
+            name: string;
+            /** @description [minX, minY, width, height] */
+            viewBox: [
+                number,
+                number,
+                number,
+                number
+            ];
+            /** @description viewBox units per meter */
+            pxPerMeter: number;
+            /**
+             * @description null or left out: a blank sheet
+             * @enum {string|null}
+             */
+            background?: "demo-office" | null;
+        };
+        UpdatePlanDto: {
+            name?: string;
+            /** @description [minX, minY, width, height] */
+            viewBox?: [
+                number,
+                number,
+                number,
+                number
+            ];
+            /** @description viewBox units per meter */
+            pxPerMeter?: number;
+            /**
+             * @description null or left out: a blank sheet
+             * @enum {string|null}
+             */
+            background?: "demo-office" | null;
+            /** @description The version the change is based on; 409 if it is stale */
+            version: number;
+        };
+        CreateZoneDto: {
+            type: components["schemas"]["ZoneType"];
+            shape: components["schemas"]["RectShape"] | components["schemas"]["CircleShape"] | components["schemas"]["PolygonShape"];
+            /**
+             * @description Marker, hover tint and legend swatch
+             * @example #C9962A
+             */
+            color: string;
+            /** @description Paint and tab order; default: above the plan's other zones */
+            zIndex?: number;
+            /** @description null: the frontend default (20) */
+            hitPadding?: number | null;
+            /** @description null: placed at the shape center */
+            label?: components["schemas"]["ZoneLabel"] | null;
+            /** @description Both languages: the frontend shows every zone in both */
+            content: components["schemas"]["ZoneContentByLang"];
+        };
+        ZoneContentPatch: {
+            en?: components["schemas"]["ZoneContent"];
+            ru?: components["schemas"]["ZoneContent"];
+        };
+        UpdateZoneDto: {
+            type?: components["schemas"]["ZoneType"];
+            shape?: components["schemas"]["RectShape"] | components["schemas"]["CircleShape"] | components["schemas"]["PolygonShape"];
+            /**
+             * @description Marker, hover tint and legend swatch
+             * @example #C9962A
+             */
+            color?: string;
+            /** @description Paint and tab order; default: above the plan's other zones */
+            zIndex?: number;
+            /** @description null: the frontend default (20) */
+            hitPadding?: number | null;
+            /** @description null: placed at the shape center */
+            label?: components["schemas"]["ZoneLabel"] | null;
+            content?: components["schemas"]["ZoneContentPatch"];
+            /** @description The version the change is based on; 409 if it is stale */
+            version: number;
         };
     };
     responses: never;
@@ -285,6 +419,57 @@ export interface operations {
             };
         };
     };
+    plans_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every plan, oldest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanSummaryResponse"][];
+                };
+            };
+        };
+    };
+    plans_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePlanDto"];
+            };
+        };
+        responses: {
+            /** @description The new plan, without zones, at version 1 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanResponse"];
+                };
+            };
+            /** @description The body is invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     plans_findOne: {
         parameters: {
             query?: never;
@@ -314,6 +499,208 @@ export interface operations {
             };
             /** @description No plan has this id */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    plans_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The plan and its zones are deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The id is not a UUID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No plan has this id */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    plans_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePlanDto"];
+            };
+        };
+        responses: {
+            /** @description The changed plan with its zones, at the next version */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanResponse"];
+                };
+            };
+            /** @description The id is not a UUID, the body is invalid or changes nothing */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No plan has this id */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The plan has changed since the version sent; reload it */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    zones_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateZoneDto"];
+            };
+        };
+        responses: {
+            /** @description The new zone, last in the legend, at version 1 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ZoneResponse"];
+                };
+            };
+            /** @description The id is not a UUID or the body is invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No plan has this id */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    zones_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The zone and its content are deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The id is not a UUID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No zone has this id */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    zones_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateZoneDto"];
+            };
+        };
+        responses: {
+            /** @description The changed zone, at the next version */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ZoneResponse"];
+                };
+            };
+            /** @description The id is not a UUID, the body is invalid or changes nothing */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No zone has this id */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The zone has changed since the version sent; reload it */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

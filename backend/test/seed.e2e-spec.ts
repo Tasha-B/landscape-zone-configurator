@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { DEMO_BACKGROUND, DEMO_PLAN_ID, DEMO_ZONE_IDS, seedDemoPlan } from "../prisma/demo-plan.js";
 import { demoPlan } from "../prisma/demo-plan-data.js";
 import { PrismaClient } from "../src/generated/prisma/client.js";
-import { ZONE_TYPE_NAMES } from "../src/plans/zone-type.js";
+import { ZONE_TYPE_NAMES } from "../src/zones/zone-type.js";
 
 describe("demo plan seed (e2e)", () => {
   let prisma: PrismaClient;

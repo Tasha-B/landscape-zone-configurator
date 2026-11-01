@@ -32,6 +32,44 @@ describe("OpenAPI (e2e)", () => {
     expect(Object.keys(operation.responses)).toEqual(expect.arrayContaining(["200", "400", "404"]));
   });
 
+  it("documents the plan endpoints with their operation ids, bodies and errors", async () => {
+    const { body } = await request(app.getHttpServer()).get("/api/docs-json").expect(200);
+    const operations = {
+      list: body.paths["/api/plans"].get,
+      create: body.paths["/api/plans"].post,
+      update: body.paths["/api/plans/{id}"].patch,
+      remove: body.paths["/api/plans/{id}"].delete,
+    };
+    for (const [method, operation] of Object.entries(operations)) {
+      expect(operation.operationId).toBe(`plans_${method}`);
+    }
+    expect(Object.keys(operations.create.responses)).toEqual(expect.arrayContaining(["201", "400"]));
+    expect(Object.keys(operations.update.responses)).toEqual(expect.arrayContaining(["200", "400", "404", "409"]));
+    expect(Object.keys(operations.remove.responses)).toEqual(expect.arrayContaining(["204", "400", "404"]));
+    expect(operations.create.requestBody.content["application/json"].schema.$ref).toBe(
+      "#/components/schemas/CreatePlanDto",
+    );
+    expect(body.components.schemas.UpdatePlanDto.required).toEqual(["version"]);
+  });
+
+  it("documents the zone endpoints with their operation ids, bodies and errors", async () => {
+    const { body } = await request(app.getHttpServer()).get("/api/docs-json").expect(200);
+    const operations = {
+      create: body.paths["/api/plans/{id}/zones"].post,
+      update: body.paths["/api/zones/{id}"].patch,
+      remove: body.paths["/api/zones/{id}"].delete,
+    };
+    for (const [method, operation] of Object.entries(operations)) {
+      expect(operation.operationId).toBe(`zones_${method}`);
+    }
+    expect(Object.keys(operations.create.responses)).toEqual(expect.arrayContaining(["201", "400", "404"]));
+    expect(Object.keys(operations.update.responses)).toEqual(expect.arrayContaining(["200", "400", "404", "409"]));
+    expect(Object.keys(operations.remove.responses)).toEqual(expect.arrayContaining(["204", "400", "404"]));
+    // The request bodies use the same shape union as the response
+    expect(body.components.schemas.CreateZoneDto.properties.shape.discriminator.propertyName).toBe("kind");
+    expect(body.components.schemas.UpdateZoneDto.required).toEqual(["version"]);
+  });
+
   it("describes the shape as one of three schemas, told apart by kind", async () => {
     const { body } = await request(app.getHttpServer()).get("/api/docs-json").expect(200);
     const { shape } = body.components.schemas.ZoneResponse.properties;
