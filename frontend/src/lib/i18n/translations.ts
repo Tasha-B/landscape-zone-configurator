@@ -39,6 +39,13 @@ export interface Translations {
   };
   editor: {
     title: string;
+    back: string;
+    loading: string;
+    loadError: string;
+    retry: string;
+    notFound: string;
+    help: string;
+    canvasLabel: string;
   };
   notFound: {
     title: string;
@@ -102,6 +109,13 @@ export const translations: Record<Lang, Translations> = {
     },
     editor: {
       title: "Edit plan",
+      back: "← Plans",
+      loading: "Loading the plan…",
+      loadError: "The plan could not be loaded",
+      retry: "Try again",
+      notFound: "This plan does not exist. It may have been deleted.",
+      help: "Click a zone to select it, drag it to move it, drag its handles to resize it. Arrow keys move the selected zone (with Shift, by 10). Esc clears the selection.",
+      canvasLabel: "Plan “{name}”",
     },
     notFound: {
       title: "This page does not exist",
@@ -164,6 +178,13 @@ export const translations: Record<Lang, Translations> = {
     },
     editor: {
       title: "Редактирование плана",
+      back: "← Планы",
+      loading: "Загружаем план…",
+      loadError: "Не удалось загрузить план",
+      retry: "Попробовать снова",
+      notFound: "Такого плана нет. Возможно, его удалили.",
+      help: "Нажмите на зону, чтобы выбрать её; перетащите, чтобы передвинуть; тяните за маркеры, чтобы изменить размер. Стрелки двигают выбранную зону (с Shift — на 10). Esc снимает выбор.",
+      canvasLabel: "План «{name}»",
     },
     notFound: {
       title: "Такой страницы нет",
