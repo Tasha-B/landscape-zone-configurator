@@ -12,6 +12,30 @@ export interface Translations {
   };
   plans: {
     title: string;
+    intro: string;
+    newPlanLabel: string;
+    create: string;
+    creating: string;
+    createError: string;
+    loading: string;
+    loadError: string;
+    retry: string;
+    empty: string;
+    listLabel: string;
+    // Plural forms with {count}: Intl.PluralRules picks one; English uses
+    // only "one" and "other"
+    zonesOne: string;
+    zonesFew: string;
+    zonesMany: string;
+    zonesOther: string;
+    changed: string;
+    onShowcase: string;
+    edit: string;
+    delete: string;
+    deleteConfirm: string;
+    deleteYes: string;
+    deleteNo: string;
+    deleteError: string;
   };
   editor: {
     title: string;
@@ -53,6 +77,28 @@ export const translations: Record<Lang, Translations> = {
     },
     plans: {
       title: "Plans",
+      intro: "Create a plan, then draw its zones in the editor.",
+      newPlanLabel: "Name of the new plan",
+      create: "Create plan",
+      creating: "Creating…",
+      createError: "The plan could not be created",
+      loading: "Loading the plans…",
+      loadError: "The plans could not be loaded",
+      retry: "Try again",
+      empty: "No plans yet. Create the first one above.",
+      listLabel: "All plans",
+      zonesOne: "{count} zone",
+      zonesFew: "{count} zones",
+      zonesMany: "{count} zones",
+      zonesOther: "{count} zones",
+      changed: "changed {date}",
+      onShowcase: "on the showcase",
+      edit: "Edit",
+      delete: "Delete",
+      deleteConfirm: "Delete “{name}” with all its zones? This cannot be undone.",
+      deleteYes: "Delete for good",
+      deleteNo: "Cancel",
+      deleteError: "The plan could not be deleted",
     },
     editor: {
       title: "Edit plan",
@@ -93,6 +139,28 @@ export const translations: Record<Lang, Translations> = {
     },
     plans: {
       title: "Планы",
+      intro: "Создайте план, а затем нарисуйте его зоны в редакторе.",
+      newPlanLabel: "Название нового плана",
+      create: "Создать план",
+      creating: "Создаём…",
+      createError: "Не удалось создать план",
+      loading: "Загружаем планы…",
+      loadError: "Не удалось загрузить планы",
+      retry: "Попробовать снова",
+      empty: "Планов пока нет. Создайте первый выше.",
+      listLabel: "Все планы",
+      zonesOne: "{count} зона",
+      zonesFew: "{count} зоны",
+      zonesMany: "{count} зон",
+      zonesOther: "{count} зоны",
+      changed: "изменён {date}",
+      onShowcase: "на витрине",
+      edit: "Редактировать",
+      delete: "Удалить",
+      deleteConfirm: "Удалить «{name}» вместе со всеми зонами? Это нельзя отменить.",
+      deleteYes: "Удалить насовсем",
+      deleteNo: "Отмена",
+      deleteError: "Не удалось удалить план",
     },
     editor: {
       title: "Редактирование плана",
