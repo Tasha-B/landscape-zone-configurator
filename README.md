@@ -35,6 +35,7 @@ docs/       project documentation
 - [Phase 4 — Read API](docs/phase-4-read-api.md): the endpoint, the OpenAPI → types contract, loading and error states, backgrounds and anchored notes, findings
 - [Phase 5 — CRUD: plan](docs/phase-5-crud-plan.md): create, update and delete for plans and zones, validation, `409` on a stale version
 - [Phase 5 — CRUD](docs/phase-5-crud.md): the endpoints, versions and `409`, validation by shape kind, tests, findings
+- [Phase 6 — Editor: plan](docs/phase-6-editor-plan.md): the plans page and the editor, routing, saving each change with rollback and `409` handling
 
 ## Run locally
 

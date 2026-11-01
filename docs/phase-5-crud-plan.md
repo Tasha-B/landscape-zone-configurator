@@ -149,7 +149,7 @@ Each step is a separate commit, and both apps build after every one.
 - [x] A `PATCH` of a plan or a zone with a stale version is `409`, and two concurrent `PATCH` requests on one version give one `200` and one `409`.
 - [x] Every new endpoint is in `openapi.json` with its errors, and the frontend's generated types include the request bodies.
 - [x] The page looks and works as after phase 4.
-- [ ] Both CI jobs are green.
+- [x] Both CI jobs are green.
 
 ## Out of scope
 
