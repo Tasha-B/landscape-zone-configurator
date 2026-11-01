@@ -15,6 +15,7 @@ export function toPlanResponse(plan: PlanRow): PlanResponse {
     viewBox: plan.viewBox as PlanResponse["viewBox"],
     pxPerMeter: plan.pxPerMeter,
     background: plan.background,
+    version: plan.version,
     zones: plan.zones.map(toZoneResponse),
   };
 }

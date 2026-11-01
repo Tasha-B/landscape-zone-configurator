@@ -129,6 +129,8 @@ export class PlanResponse {
     description: '"demo-office": the demo office\'s artwork; null: a blank sheet',
   })
   background!: string | null;
+  @ApiProperty({ type: "integer", description: "Increases with every change (optimistic concurrency)" })
+  version!: number;
   @ApiProperty({ type: [ZoneResponse], description: "Legend order" })
   zones!: ZoneResponse[];
 }

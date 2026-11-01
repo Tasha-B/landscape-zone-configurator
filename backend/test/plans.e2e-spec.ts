@@ -37,6 +37,7 @@ describe("plans (e2e)", () => {
       viewBox: demoPlan.viewBox,
       pxPerMeter: demoPlan.pxPerMeter,
       background: DEMO_BACKGROUND,
+      version: 1,
       zones: demoPlan.zones.map((zone) => ({
         ...zone,
         id: DEMO_ZONE_IDS[zone.id],

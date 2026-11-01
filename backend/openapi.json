@@ -548,6 +548,10 @@
             "nullable": true,
             "description": "\"demo-office\": the demo office's artwork; null: a blank sheet"
           },
+          "version": {
+            "type": "integer",
+            "description": "Increases with every change (optimistic concurrency)"
+          },
           "zones": {
             "description": "Legend order",
             "type": "array",
@@ -562,6 +566,7 @@
           "viewBox",
           "pxPerMeter",
           "background",
+          "version",
           "zones"
         ]
       }

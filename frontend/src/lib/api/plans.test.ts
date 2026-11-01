@@ -30,6 +30,7 @@ function plan(zones: ZoneResponse[]): PlanResponse {
     viewBox: [0, 0, 800, 600],
     pxPerMeter: 32,
     background: "demo-office",
+    version: 3,
     zones,
   };
 }

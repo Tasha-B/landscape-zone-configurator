@@ -18,7 +18,8 @@ export class ApiError extends Error {
 
 // The API's plan in the frontend's model. Every field is named on both
 // sides, so a field the API renames or drops breaks the build here. The API
-// sends null where the model leaves a field out.
+// sends null where the model leaves a field out. The plan's and the zones'
+// `version` are left out until the editor sends them back (phase 6).
 export function toFloorPlan(plan: PlanResponse): FloorPlan {
   return {
     id: plan.id,
@@ -30,7 +31,6 @@ export function toFloorPlan(plan: PlanResponse): FloorPlan {
   };
 }
 
-// `version` is left out until the editor sends it back (phase 6)
 function toZone(zone: ZoneResponse): Zone {
   return {
     id: zone.id,

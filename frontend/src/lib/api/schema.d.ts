@@ -125,6 +125,8 @@ export interface components {
             pxPerMeter: number;
             /** @description "demo-office": the demo office's artwork; null: a blank sheet */
             background: string | null;
+            /** @description Increases with every change (optimistic concurrency) */
+            version: number;
             /** @description Legend order */
             zones: components["schemas"]["ZoneResponse"][];
         };
