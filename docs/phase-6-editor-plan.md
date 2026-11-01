@@ -1,6 +1,6 @@
 # Phase 6 — Editor: plan
 
-Part of the [roadmap](phase-0-roadmap.md). The result will be recorded in `phase-6-editor.md`.
+Part of the [roadmap](phase-0-roadmap.md). The result is recorded in [phase-6-editor.md](phase-6-editor.md).
 
 ## Goal
 
@@ -160,24 +160,24 @@ Each step is a separate commit, and both apps build after every one.
 
 1. **Plan.** This document. Tick the last acceptance box of phase 5 (both CI jobs were green on PR #7).
 2. **Routing.** React Router, the header, the showcase moved to `/` as `ShowcasePage`, empty `/plans` and `/plans/:id/edit`, not found. Screenshots of `/` against `main`.
-3. **API layer.** `request()`, the endpoint functions, the cache of the API answer with `select`, mutation hooks with scopes, optimistic updates and refetch on error; unit tests. Testing Library and jsdom come in here.
+3. **API layer.** `request()`, the endpoint functions, the cache of the API answer with `select`, mutation hooks with scopes, optimistic updates and refetch on error; unit tests. Testing Library and jsdom come in here. *(Done; pending changes are drawn over the cache, and one queue serves the whole plan.)*
 4. **Plans page.** List, create, delete, with component tests.
 5. **Editor canvas.** Drawing, selection, moving, resizing and vertex dragging with the pointer and the keyboard, saving on release; the pure functions with unit tests.
-6. **Toolbar and panels.** Add and delete zones, the zone and plan properties, the status messages, the small-screen note; component tests for saving, rollback and `409`.
+6. **Toolbar and panels.** Add and delete zones, the zone and plan properties, the status messages, the small-screen note; component tests for saving, rollback and `409`. *(Done, then reworked after trying the editor: polygon vertices are added and removed, fewer Tab stops, the page's language only, the editor survives a lost server, a click threshold. See [deviations](phase-6-editor.md#deviations-from-the-plan).)*
 7. **Docs.** `phase-6-editor.md`, the roadmap, the README (the pages and how to edit).
 
 ## Acceptance criteria
 
-- [ ] `/plans` lists the plans; a plan can be created, opened in the editor and deleted.
-- [ ] In the editor, zones of all three kinds can be selected, moved and resized (polygons by their vertices), with the pointer and, for moving, the keyboard; each change is saved and survives a reload.
-- [ ] Zones can be added (rect, circle, polygon) and deleted; a zone's type, color and texts in both languages, and the plan's name, size, scale and background, can be edited.
-- [ ] A failed save is rolled back with a message; a change made meanwhile in another tab leads to `409`, a reload and a message.
-- [ ] `/` looks and works as after phase 5: screenshots are byte-identical with the header hidden, except shots taken mid-animation or mid-hover.
+- [x] `/plans` lists the plans; a plan can be created, opened in the editor and deleted.
+- [x] In the editor, zones of all three kinds can be selected, moved and resized (polygons by their vertices), with the pointer and, for moving, the keyboard; each change is saved and survives a reload.
+- [x] Zones can be added (rect, circle, polygon) and deleted; a zone's type, color and texts in both languages, and the plan's name, size, scale and background, can be edited. *(Texts of the page's language only: see the deviations.)*
+- [x] A failed save is rolled back with a message; a change made meanwhile in another tab leads to `409`, a reload and a message.
+- [x] `/` looks and works as after phase 5: screenshots are byte-identical with the header hidden, except shots taken mid-animation or mid-hover.
 - [ ] Both CI jobs are green.
 
 ## Out of scope
 
-- Adding or removing polygon vertices, drawing a polygon point by point (decision 3).
+- Drawing a polygon point by point (decision 3). *(Adding and removing vertices came in after all.)*
 - A language switch on the page (decision 4).
 - Undo and redo, copy and paste, selecting several zones.
 - Editing `zIndex`, `hitPadding` and the label offset, and reordering the legend.

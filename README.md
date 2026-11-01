@@ -8,7 +8,7 @@ and is being grown into a fullstack editor.
 
 | Layer    | Tech                                              | Status  |
 | -------- | ------------------------------------------------- | ------- |
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS v4, Framer Motion, TanStack Query, Vitest | loads the plan from the API |
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS v4, Framer Motion, TanStack Query, React Router, Vitest, Testing Library | showcase, plans page and editor; every change saved at once |
 | Backend  | NestJS 12, Prisma 7, REST + WebSockets            | REST for plans and zones with validation and `409` on stale versions, Swagger UI, `/api/health` with a database check |
 | Database | PostgreSQL 18                                     | schema, migrations and the demo plan seed; local, in Docker |
 | DevOps   | Docker, docker-compose, GitHub Actions            | CI for both apps, backend e2e against Postgres, checks for a stale API contract; Postgres in docker-compose |
@@ -36,6 +36,7 @@ docs/       project documentation
 - [Phase 5 — CRUD: plan](docs/phase-5-crud-plan.md): create, update and delete for plans and zones, validation, `409` on a stale version
 - [Phase 5 — CRUD](docs/phase-5-crud.md): the endpoints, versions and `409`, validation by shape kind, tests, findings
 - [Phase 6 — Editor: plan](docs/phase-6-editor-plan.md): the plans page and the editor, routing, saving each change with rollback and `409` handling
+- [Phase 6 — Editor](docs/phase-6-editor.md): the pages, editing on the canvas and in the panels, pending changes over the confirmed plan, checks, findings
 
 ## Run locally
 
@@ -54,7 +55,7 @@ npm run dev:frontend   # in a second terminal: http://localhost:5173
 npm run db:down        # stop Postgres; the data is kept
 ```
 
-Vite forwards `/api` to the API. Swagger UI is at http://localhost:3000/api/docs; its "Try it out" buttons create, change and delete plans and zones. Without the API the page shows an error with a "Try again" button. If the demo office was changed or deleted, `npm run db:seed` restores it.
+The showcase is at http://localhost:5173, the plans and their editor at http://localhost:5173/plans (the editor needs a window at least 768 px wide). Vite forwards `/api` to the API. Swagger UI is at http://localhost:3000/api/docs; its "Try it out" buttons create, change and delete plans and zones. Without the API the page shows an error with a "Try again" button. If the demo office was changed or deleted, `npm run db:seed` restores it.
 
 Other database scripts: `npm run db:migrate -- --name <name>` creates a migration from changes to `backend/prisma/schema.prisma`, and `npm run db:studio` opens Prisma Studio to browse the data. The backend e2e tests (`npm run test:e2e -w backend`) also need `db:up`; they use a separate `lzc_test` database.
 

@@ -145,6 +145,19 @@ REST stays the source of truth. The gateway only broadcasts changes that have al
 
 Phases 8 and 9 can move up to right after phase 3. Every PR after that then goes through CI, which shows the DevOps side of the project from early on.
 
+Done so far: phases 1–6. The editor of phase 6 is described in [phase-6-editor.md](phase-6-editor.md).
+
+## Later
+
+Editor features asked for while trying phase 6, kept out of it so that it could ship. Each gets its own plan when it is scheduled.
+
+- **Selecting several zones** (Shift+click, moving and deleting them together; the properties panel stays for one zone). After phase 7, since live updates from other viewers affect how a selection of several zones should behave.
+- **Curved polygon edges.** Today a curve is a run of points. Two ways were weighed on 2026-11-01:
+  - **real Bézier edges:** optional control points per edge, a new shape description validated by the API (the column is JSON, so no migration), drawing as a `path`, geometry (area, center, marker strokes, hit area) from the curve split into short segments, and an edge toggled to a curve in the editor with two control handles;
+  - **a "round this edge" action:** it replaces the edge with points along an arc, so the shape stays a polygon but the curve cannot be adjusted afterwards.
+
+  The first is preferred.
+
 ## Open questions
 
 Questions that are not decided yet but block a later phase. Each one is settled in the plan of the phase named in it, and moves into that plan's decisions.
