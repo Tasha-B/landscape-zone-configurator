@@ -53,6 +53,8 @@ interface EditorCanvasProps {
   selectedId: string | null;
   onSelect: (zoneId: string | null) => void;
   onShapeChange: (zoneId: string, shape: Shape) => void;
+  // Delete or Backspace on a zone: the editor asks before deleting it
+  onDeleteRequest: (zoneId: string) => void;
   // Increases when a change could not be saved: a released draft is dropped,
   // and the plan's own shape shows again
   saveErrors: number;
@@ -68,6 +70,7 @@ export default function EditorCanvas({
   selectedId,
   onSelect,
   onShapeChange,
+  onDeleteRequest,
   saveErrors,
 }: EditorCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -134,6 +137,12 @@ export default function EditorCanvas({
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       onSelect(zone.id);
+      return;
+    }
+    if (event.key === "Delete" || event.key === "Backspace") {
+      event.preventDefault();
+      onSelect(zone.id);
+      onDeleteRequest(zone.id);
       return;
     }
     const arrow = ARROWS[event.key];

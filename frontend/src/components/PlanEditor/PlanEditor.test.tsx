@@ -1,92 +1,15 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { PlanResponse, ZoneResponse } from "../../lib/api/types";
-import { LanguageProvider } from "../../lib/i18n/LanguageProvider";
-import PlanEditorPage from "../../pages/PlanEditorPage";
-
-const PLAN = "00000000-0000-4000-8000-0000000000aa";
-const content = (name: string) => ({
-  en: { name, tagline: "t", recommendation: "r", rationale: "w" },
-  ru: { name: `${name} (ru)`, tagline: "т", recommendation: "р", rationale: "п" },
-});
-
-function zone(id: string, name: string, shape: ZoneResponse["shape"], zIndex: number): ZoneResponse {
-  return { id, type: "custom", shape, color: "#4A7C59", zIndex, hitPadding: null, label: null, version: 1, content: content(name) };
-}
-
-// The API in memory, checking zone versions like the real one.
-// `failNext` answers the next write with that status.
-function fakeApi() {
-  const api = {
-    plan: {
-      id: PLAN,
-      name: "Second floor",
-      viewBox: [0, 0, 800, 600],
-      pxPerMeter: 32,
-      background: null,
-      version: 1,
-      zones: [
-        zone("a", "Reception", { kind: "rect", x: 100, y: 100, width: 200, height: 100, rx: 4 }, 1),
-        zone("b", "Lounge", { kind: "circle", cx: 600, cy: 300, r: 50 }, 2),
-        zone("c", "Bay", { kind: "polygon", points: [[400, 400], [500, 400], [450, 500]] }, 3),
-      ],
-    } as PlanResponse,
-    patches: [] as Record<string, unknown>[],
-    failNext: null as number | null,
-  };
-  vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
-    const method = init.method ?? "GET";
-    if (method === "GET") {
-      return url === `/api/plans/${PLAN}`
-        ? Response.json(api.plan)
-        : Response.json({ statusCode: 404, message: "Plan not found" }, { status: 404 });
-    }
-    const zoneId = url.match(/^\/api\/zones\/(.+)$/)?.[1];
-    if (method === "PATCH" && zoneId) {
-      const body = JSON.parse(init.body as string) as Record<string, unknown>;
-      api.patches.push(body);
-      if (api.failNext) {
-        const status = api.failNext;
-        api.failNext = null;
-        return Response.json({ statusCode: status, message: "failed" }, { status });
-      }
-      const current = api.plan.zones.find((item) => item.id === zoneId)!;
-      if (body.version !== current.version) return Response.json({ statusCode: 409, message: "changed" }, { status: 409 });
-      const { version: _, ...fields } = body;
-      const next = { ...current, ...fields, version: current.version + 1 } as ZoneResponse;
-      api.plan = { ...api.plan, zones: api.plan.zones.map((item) => (item.id === zoneId ? next : item)) };
-      return Response.json(next);
-    }
-    throw new Error(`Unexpected ${method} ${url}`);
-  });
-  return api;
-}
-
-function renderEditor(id = PLAN) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  render(
-    <QueryClientProvider client={client}>
-      <LanguageProvider>
-        <MemoryRouter initialEntries={[`/plans/${id}/edit`]}>
-          <Routes>
-            <Route path="/plans/:id/edit" element={<PlanEditorPage />} />
-          </Routes>
-        </MemoryRouter>
-      </LanguageProvider>
-    </QueryClientProvider>,
-  );
-}
+import { fakeEditorApi, renderEditor } from "./fakeEditorApi";
 
 describe("the plan editor", () => {
-  let api: ReturnType<typeof fakeApi>;
+  let api: ReturnType<typeof fakeEditorApi>;
 
   beforeEach(() => {
-    api = fakeApi();
+    api = fakeEditorApi();
     // The SVG is laid out 1:1 with its 800 × 600 viewBox (jsdom has no layout)
     vi.spyOn(SVGElement.prototype, "getBoundingClientRect").mockReturnValue(
       { left: 0, top: 0, width: 800, height: 600, x: 0, y: 0, right: 800, bottom: 600 } as DOMRect,

@@ -1,3 +1,5 @@
+import type { ZoneType } from "../plan/types";
+
 export type Lang = "en" | "ru";
 
 // The map section of the original Cairn Botanics translations (the rest of
@@ -46,7 +48,42 @@ export interface Translations {
     notFound: string;
     help: string;
     canvasLabel: string;
+    toolbarLabel: string;
+    addRect: string;
+    addCircle: string;
+    addPolygon: string;
+    deleteZone: string;
+    deleteConfirm: string;
+    deleteYes: string;
+    deleteNo: string;
+    saving: string;
+    saved: string;
+    saveFailed: string;
+    conflict: string;
+    zonePanel: string;
+    planPanel: string;
+    panelHint: string;
+    type: string;
+    color: string;
+    colorInvalid: string;
+    english: string;
+    russian: string;
+    name: string;
+    tagline: string;
+    recommendation: string;
+    rationale: string;
+    required: string;
+    width: string;
+    height: string;
+    scale: string;
+    numberInvalid: string;
+    background: string;
+    backgroundNone: string;
+    backgroundDemo: string;
+    smallScreen: string;
   };
+  // ZoneType names (lib/plan/types.ts)
+  zoneTypes: Record<ZoneType, string>;
   notFound: {
     title: string;
     back: string;
@@ -116,6 +153,47 @@ export const translations: Record<Lang, Translations> = {
       notFound: "This plan does not exist. It may have been deleted.",
       help: "Click a zone to select it, drag it to move it, drag its handles to resize it. Arrow keys move the selected zone (with Shift, by 10). Esc clears the selection.",
       canvasLabel: "Plan “{name}”",
+      toolbarLabel: "Zone tools",
+      addRect: "+ Rectangle",
+      addCircle: "+ Circle",
+      addPolygon: "+ Polygon",
+      deleteZone: "Delete zone",
+      deleteConfirm: "Delete “{name}”? This cannot be undone.",
+      deleteYes: "Delete for good",
+      deleteNo: "Cancel",
+      saving: "Saving…",
+      saved: "All changes saved",
+      saveFailed: "Could not save. The change was undone.",
+      conflict: "This plan was changed elsewhere and has been reloaded.",
+      zonePanel: "Zone",
+      planPanel: "Plan",
+      panelHint: "Select a zone to edit it. With no zone selected, this panel edits the plan.",
+      type: "Type",
+      color: "Color",
+      colorInvalid: "Use the form #rrggbb",
+      english: "English",
+      russian: "Russian",
+      name: "Name",
+      tagline: "Tagline",
+      recommendation: "Recommendation",
+      rationale: "Rationale",
+      required: "Fill this in",
+      width: "Width",
+      height: "Height",
+      scale: "Units per meter",
+      numberInvalid: "A number above 0",
+      background: "Background",
+      backgroundNone: "Blank sheet",
+      backgroundDemo: "Demo office artwork",
+      smallScreen: "The editor needs a wider screen. Open it on a tablet or a computer.",
+    },
+    zoneTypes: {
+      reception: "Reception",
+      "meeting-room": "Meeting room",
+      "open-floor": "Open floor",
+      "break-room": "Break room",
+      "signature-corner": "Signature corner",
+      custom: "Custom",
     },
     notFound: {
       title: "This page does not exist",
@@ -185,6 +263,47 @@ export const translations: Record<Lang, Translations> = {
       notFound: "Такого плана нет. Возможно, его удалили.",
       help: "Нажмите на зону, чтобы выбрать её; перетащите, чтобы передвинуть; тяните за маркеры, чтобы изменить размер. Стрелки двигают выбранную зону (с Shift — на 10). Esc снимает выбор.",
       canvasLabel: "План «{name}»",
+      toolbarLabel: "Инструменты зон",
+      addRect: "+ Прямоугольник",
+      addCircle: "+ Круг",
+      addPolygon: "+ Многоугольник",
+      deleteZone: "Удалить зону",
+      deleteConfirm: "Удалить «{name}»? Это нельзя отменить.",
+      deleteYes: "Удалить насовсем",
+      deleteNo: "Отмена",
+      saving: "Сохраняем…",
+      saved: "Все изменения сохранены",
+      saveFailed: "Не удалось сохранить. Изменение отменено.",
+      conflict: "План изменили в другом месте, мы его перезагрузили.",
+      zonePanel: "Зона",
+      planPanel: "План",
+      panelHint: "Выберите зону, чтобы её редактировать. Без выбранной зоны здесь редактируется план.",
+      type: "Тип",
+      color: "Цвет",
+      colorInvalid: "Нужен вид #rrggbb",
+      english: "Английский",
+      russian: "Русский",
+      name: "Название",
+      tagline: "Подзаголовок",
+      recommendation: "Рекомендация",
+      rationale: "Обоснование",
+      required: "Заполните поле",
+      width: "Ширина",
+      height: "Высота",
+      scale: "Единиц на метр",
+      numberInvalid: "Число больше 0",
+      background: "Фон",
+      backgroundNone: "Чистый лист",
+      backgroundDemo: "Рисунок демо-офиса",
+      smallScreen: "Редактору нужен экран пошире. Откройте его на планшете или компьютере.",
+    },
+    zoneTypes: {
+      reception: "Ресепшен",
+      "meeting-room": "Переговорная",
+      "open-floor": "Открытое пространство",
+      "break-room": "Зона отдыха",
+      "signature-corner": "Фирменный уголок",
+      custom: "Другое",
     },
     notFound: {
       title: "Такой страницы нет",
