@@ -1,7 +1,7 @@
 // class-transformer's @Type reads decorator metadata; the DTO unit tests
 // load the DTOs without Nest, which loads this polyfill otherwise
 import "reflect-metadata";
-import { ValidationPipe } from "@nestjs/common";
+import { BadRequestException, ValidationPipe } from "@nestjs/common";
 import { plainToInstance } from "class-transformer";
 import { IsNumber, ValidateIf, validate, type ValidationError, type ValidatorOptions } from "class-validator";
 
@@ -25,6 +25,13 @@ export const IsFiniteNumber = () => IsNumber(FINITE);
 // May be left out, but not sent as null. IsOptional() accepts both, which
 // would let null reach columns that cannot hold it.
 export const IsOmittable = () => ValidateIf((_, value) => value !== undefined);
+
+// A PATCH changes something: a body with nothing but `version` would only
+// raise the version
+export function assertChanges(dto: { version: number }): void {
+  const changed = Object.entries(dto).some(([key, value]) => key !== "version" && value !== undefined);
+  if (!changed) throw new BadRequestException("Nothing to update: send at least one field besides version");
+}
 
 // The paths of the invalid properties ("shape.points"), for the DTO unit
 // tests: what the ValidationPipe would reject the body for

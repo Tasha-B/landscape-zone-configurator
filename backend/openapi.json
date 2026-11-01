@@ -237,6 +237,62 @@
         ]
       }
     },
+    "/api/plans": {
+      "get": {
+        "operationId": "plans_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Every plan, oldest first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlanSummaryResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "plans"
+        ]
+      },
+      "post": {
+        "operationId": "plans_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new plan, without zones, at version 1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is invalid"
+          }
+        },
+        "tags": [
+          "plans"
+        ]
+      }
+    },
     "/api/plans/{id}": {
       "get": {
         "operationId": "plans_findOne",
@@ -271,6 +327,80 @@
         "tags": [
           "plans"
         ]
+      },
+      "patch": {
+        "operationId": "plans_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The changed plan with its zones, at the next version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The id is not a UUID, the body is invalid or changes nothing"
+          },
+          "404": {
+            "description": "No plan has this id"
+          },
+          "409": {
+            "description": "The plan has changed since the version sent; reload it"
+          }
+        },
+        "tags": [
+          "plans"
+        ]
+      },
+      "delete": {
+        "operationId": "plans_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The plan and its zones are deleted"
+          },
+          "400": {
+            "description": "The id is not a UUID"
+          },
+          "404": {
+            "description": "No plan has this id"
+          }
+        },
+        "tags": [
+          "plans"
+        ]
       }
     }
   },
@@ -284,6 +414,36 @@
   "servers": [],
   "components": {
     "schemas": {
+      "PlanSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "background": {
+            "type": "string",
+            "nullable": true
+          },
+          "zoneCount": {
+            "type": "integer"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "background",
+          "zoneCount",
+          "updatedAt"
+        ]
+      },
       "RectShape": {
         "type": "object",
         "properties": {
@@ -583,6 +743,85 @@
           "background",
           "version",
           "zones"
+        ]
+      },
+      "CreatePlanDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "viewBox": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 4,
+            "maxItems": 4,
+            "description": "[minX, minY, width, height]"
+          },
+          "pxPerMeter": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "viewBox units per meter"
+          },
+          "background": {
+            "type": "string",
+            "enum": [
+              "demo-office"
+            ],
+            "nullable": true,
+            "description": "null or left out: a blank sheet"
+          }
+        },
+        "required": [
+          "name",
+          "viewBox",
+          "pxPerMeter"
+        ]
+      },
+      "UpdatePlanDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "viewBox": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 4,
+            "maxItems": 4,
+            "description": "[minX, minY, width, height]"
+          },
+          "pxPerMeter": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "viewBox units per meter"
+          },
+          "background": {
+            "type": "string",
+            "enum": [
+              "demo-office"
+            ],
+            "nullable": true,
+            "description": "null or left out: a blank sheet"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The version the change is based on; 409 if it is stale"
+          }
+        },
+        "required": [
+          "version"
         ]
       }
     }
