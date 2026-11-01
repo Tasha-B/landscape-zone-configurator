@@ -102,6 +102,8 @@ The functions are `listPlans`, `createPlan`, `updatePlan`, `deletePlan`, `create
 
 - **Changes to one zone are sent one at a time.** TanStack Query's mutation `scope` queues them per zone (and per plan), and each request takes the version from the cache when it is sent, so the version follows the previous answer. Without this, two quick drags would send the same version, and the second would get a `409` from its own first change.
 - **Rollback is a refetch**, not a restored snapshot. With queued changes, a snapshot taken before one change would also undo the ones after it; the server's state is always right.
+
+*(Changed in step 3.)* The cache holds only what the server confirmed, and the editor shows it with the pending changes on top (`useMutationState`), the "optimistic via the UI" pattern of TanStack Query. A failed change then leaves the screen by itself, and an answer never overwrites a change still queued behind it. The reload after an error stays, so a `409` shows what changed and the next queued change gets the current version.
 - **Messages** appear in a small status area of the editor: "Saving…", "Saved", "Could not save, the change was undone", "This plan was changed elsewhere and has been reloaded". They are announced to screen readers (`role="status"`).
 
 ## Code layout
