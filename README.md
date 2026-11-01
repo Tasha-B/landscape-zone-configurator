@@ -33,6 +33,7 @@ docs/       project documentation
 - [Phase 3 — Database](docs/phase-3-database.md): Prisma 7 setup, schema, seed, `PrismaService` and health, CI with Postgres, findings
 - [Phase 4 — Read API: plan](docs/phase-4-read-api-plan.md): `GET /api/plans/:id`, Swagger, generated types, the frontend on TanStack Query, plan backgrounds
 - [Phase 4 — Read API](docs/phase-4-read-api.md): the endpoint, the OpenAPI → types contract, loading and error states, backgrounds and anchored notes, findings
+- [Phase 5 — CRUD: plan](docs/phase-5-crud-plan.md): create, update and delete for plans and zones, validation, `409` on a stale version
 
 ## Run locally
 

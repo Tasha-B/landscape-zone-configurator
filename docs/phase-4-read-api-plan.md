@@ -144,7 +144,7 @@ Each step is a separate commit, and both apps build after every one.
 - [x] A plan with `background: null` shows its zones on a blank sheet, with the hint on its first zone (checked by changing the field in `lzc` by hand).
 - [x] `GET /api/plans/:id` answers `200`, `404` and `400` as above; Swagger UI lists the endpoint and the three shape schemas.
 - [x] Changing a response field in the backend without regenerating fails CI; regenerating and not updating the frontend fails the frontend typecheck.
-- [ ] Both CI jobs are green.
+- [x] Both CI jobs are green.
 
 ## Out of scope
 
