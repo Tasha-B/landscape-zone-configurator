@@ -144,7 +144,7 @@ The drawing helpers that `SpaceMapperPlan.tsx` keeps to itself (`renderShape` an
   - two quick changes send two versions in order.
   
   Dragging is covered by the pure functions; jsdom has no layout for `getScreenCTM`.
-- **The showcase is unchanged:** screenshots of `/` before and after, compared byte for byte as in phase 4.
+- **The showcase is unchanged:** screenshots of `/` from `main` and from the branch, compared byte for byte as in phase 4. The header moves the page down, which changes the antialiasing of the tilted sheet, so the branch is shot with the header hidden; both are shot back to back, because text renders slightly differently from one browser session to the next. *(Found in step 2.)*
 - **By hand, in the browser:**
   1. Create a plan and add zones.
   2. Drag, resize and edit them.
@@ -170,7 +170,7 @@ Each step is a separate commit, and both apps build after every one.
 - [ ] In the editor, zones of all three kinds can be selected, moved and resized (polygons by their vertices), with the pointer and, for moving, the keyboard; each change is saved and survives a reload.
 - [ ] Zones can be added (rect, circle, polygon) and deleted; a zone's type, color and texts in both languages, and the plan's name, size, scale and background, can be edited.
 - [ ] A failed save is rolled back with a message; a change made meanwhile in another tab leads to `409`, a reload and a message.
-- [ ] `/` looks and works as after phase 5: screenshots are byte-identical.
+- [ ] `/` looks and works as after phase 5: screenshots are byte-identical with the header hidden, except shots taken mid-animation or mid-hover.
 - [ ] Both CI jobs are green.
 
 ## Out of scope

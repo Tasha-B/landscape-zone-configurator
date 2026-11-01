@@ -1,8 +1,25 @@
 export type Lang = "en" | "ru";
 
-// Only the map section of the original Cairn Botanics translations —
-// the rest of the marketing site is not part of this project.
+// The map section of the original Cairn Botanics translations (the rest of
+// the marketing site is not part of this project), and the texts of the
+// plans page and the editor. Every text exists in both languages, although
+// the page has no language switch yet.
 export interface Translations {
+  nav: {
+    label: string;
+    showcase: string;
+    plans: string;
+  };
+  plans: {
+    title: string;
+  };
+  editor: {
+    title: string;
+  };
+  notFound: {
+    title: string;
+    back: string;
+  };
   map: {
     title: string;
     intro: string;
@@ -29,6 +46,21 @@ export interface Translations {
 
 export const translations: Record<Lang, Translations> = {
   en: {
+    nav: {
+      label: "Main",
+      showcase: "Showcase",
+      plans: "Plans",
+    },
+    plans: {
+      title: "Plans",
+    },
+    editor: {
+      title: "Edit plan",
+    },
+    notFound: {
+      title: "This page does not exist",
+      back: "Back to the showcase",
+    },
     map: {
       title: "Map your space",
       intro:
@@ -54,6 +86,21 @@ export const translations: Record<Lang, Translations> = {
     },
   },
   ru: {
+    nav: {
+      label: "Основная навигация",
+      showcase: "Витрина",
+      plans: "Планы",
+    },
+    plans: {
+      title: "Планы",
+    },
+    editor: {
+      title: "Редактирование плана",
+    },
+    notFound: {
+      title: "Такой страницы нет",
+      back: "Вернуться на витрину",
+    },
     map: {
       title: "Карта вашего пространства",
       intro:
