@@ -1,4 +1,5 @@
 import type { ZoneChanges, ZoneResponse } from "../../lib/api/types";
+import { useRovingTabIndex } from "../../lib/a11y/roving";
 import { ZONE_PALETTE } from "../../lib/editor/newZone";
 import type { Lang, Translations } from "../../lib/i18n/translations";
 import type { ZoneContent, ZoneType } from "../../lib/plan/types";
@@ -9,7 +10,7 @@ const COLOR = /^#[0-9a-fA-F]{6}$/;
 // The API's limits (ZoneContent)
 const MAX_SHORT_TEXT = 200;
 const ZONE_TYPES: ZoneType[] = ["reception", "meeting-room", "open-floor", "break-room", "signature-corner", "custom"];
-const LANGS: Lang[] = ["en", "ru"];
+const ALL_ENABLED = ZONE_PALETTE.map(() => true);
 
 interface ZonePanelProps {
   zone: ZoneResponse;
@@ -18,17 +19,21 @@ interface ZonePanelProps {
   onChange: (changes: ZoneChanges) => void;
 }
 
-// The selected zone's type, color and texts. Each language is edited here
-// whatever language the page is in; a changed text sends its language whole.
-export default function ZonePanel({ zone, lang: pageLang, t, onChange }: ZonePanelProps) {
+// The selected zone's type, color and texts. The texts are those of the
+// page's language, the one the canvas and the showcase show; the other
+// language keeps its texts (a new zone's drafts) until the page can switch
+// language. A changed text sends its language whole.
+export default function ZonePanel({ zone, lang, t, onChange }: ZonePanelProps) {
   const e = t.editor;
-  const setText = (lang: Lang, field: keyof ZoneContent, text: string) =>
+  const setText = (field: keyof ZoneContent, text: string) =>
     onChange({ content: { [lang]: { ...zone.content[lang], [field]: text } } });
+  // The palette is one stop for Tab; the arrow keys move between its colors
+  const swatch = useRovingTabIndex(ALL_ENABLED);
 
   return (
     <section aria-labelledby="zone-panel-title" className="flex flex-col gap-sm">
       <h2 id="zone-panel-title" className="font-display text-card-title text-forest-dark">
-        {e.zonePanel}: {zone.content[pageLang].name}
+        {e.zonePanel}: {zone.content[lang].name}
       </h2>
 
       <label className={LABEL_CLASS}>
@@ -49,7 +54,7 @@ export default function ZonePanel({ zone, lang: pageLang, t, onChange }: ZonePan
       <fieldset className="flex flex-col gap-xs">
         <legend className="mb-1 font-body text-xs font-semibold text-forest-dark">{e.color}</legend>
         <div className="flex flex-wrap gap-1.5">
-          {ZONE_PALETTE.map((color) => {
+          {ZONE_PALETTE.map((color, index) => {
             const current = zone.color.toUpperCase() === color;
             return (
               <button
@@ -57,6 +62,7 @@ export default function ZonePanel({ zone, lang: pageLang, t, onChange }: ZonePan
                 type="button"
                 aria-label={color}
                 aria-pressed={current}
+                {...swatch(index)}
                 onClick={() => !current && onChange({ color })}
                 className="h-7 w-7 rounded-full border-2 border-paper outline-none ring-offset-1 focus-visible:ring-2 focus-visible:ring-gold aria-pressed:ring-2 aria-pressed:ring-forest-dark"
                 style={{ background: color }}
@@ -74,24 +80,19 @@ export default function ZonePanel({ zone, lang: pageLang, t, onChange }: ZonePan
         />
       </fieldset>
 
-      {LANGS.map((lang) => (
-        <fieldset key={lang} lang={lang} className="flex flex-col gap-xs border-t border-forest-dark/10 pt-sm">
-          <legend className="font-body text-xs font-semibold uppercase tracking-wide text-ink/60">
-            {lang === "en" ? e.english : e.russian}
-          </legend>
-          {(["name", "tagline", "recommendation", "rationale"] as const).map((field) => (
-            <Field
-              key={`${zone.id}-${lang}-${field}`}
-              label={e[field]}
-              value={zone.content[lang][field]}
-              requiredMessage={e.required}
-              multiline={field === "recommendation" || field === "rationale"}
-              maxLength={field === "name" || field === "tagline" ? MAX_SHORT_TEXT : undefined}
-              onCommit={(text) => setText(lang, field, text)}
-            />
-          ))}
-        </fieldset>
-      ))}
+      <div className="flex flex-col gap-xs border-t border-forest-dark/10 pt-sm">
+        {(["name", "tagline", "recommendation", "rationale"] as const).map((field) => (
+          <Field
+            key={`${zone.id}-${lang}-${field}`}
+            label={e[field]}
+            value={zone.content[lang][field]}
+            requiredMessage={e.required}
+            multiline={field === "recommendation" || field === "rationale"}
+            maxLength={field === "name" || field === "tagline" ? MAX_SHORT_TEXT : undefined}
+            onCommit={(text) => setText(field, text)}
+          />
+        ))}
+      </div>
     </section>
   );
 }

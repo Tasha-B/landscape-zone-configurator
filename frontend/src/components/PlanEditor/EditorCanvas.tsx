@@ -1,5 +1,15 @@
 import { useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
-import { dragHandle, handlesOf, moveShape, sameShape, type Handle } from "../../lib/editor/geometry";
+import {
+  dragHandle,
+  handlesOf,
+  insertVertex,
+  midpointsOf,
+  moveShape,
+  removeVertex,
+  resizeCursor,
+  sameShape,
+  type Handle,
+} from "../../lib/editor/geometry";
 import { toPlanPoint } from "../../lib/editor/pointer";
 import type { PlanResponse, ZoneResponse } from "../../lib/api/types";
 import type { Lang } from "../../lib/i18n/translations";
@@ -8,14 +18,25 @@ import type { Point, Shape } from "../../lib/plan/types";
 import { renderShape, withAlpha } from "../Plan/shapes";
 import { PlanBackground } from "../SpaceMapper/PlanBackground";
 
-// A drag in progress: the shape as it was when it started, and where the
-// pointer went down, in viewBox units
+// A drag in progress: the shape the drag works on, where the pointer went
+// down (in viewBox units), and the zone's shape before the drag. The two
+// shapes differ when dragging an edge's midpoint, which first inserts a
+// vertex there.
 interface Drag {
   zoneId: string;
   handle: Handle | null; // null: the whole zone moves
   start: Shape;
   origin: Point;
+  before: Shape;
+  // Where the pointer went down on the screen, and whether it has since gone
+  // further than DRAG_THRESHOLD_PX: until then a press is a click, not a move
+  client: Point;
+  moved: boolean;
 }
+
+// A hand never holds a mouse or a finger perfectly still between pressing and
+// releasing; a pointer that stays this close is a click
+const DRAG_THRESHOLD_PX = 4;
 
 // The shape shown instead of the plan's while a zone is dragged, and after
 // it is released until the plan shows the saved shape (the pending change
@@ -33,6 +54,11 @@ const ARROWS: Record<string, [number, number]> = {
   ArrowUp: [0, -1],
   ArrowDown: [0, 1],
 };
+
+// Two clicks on one vertex within this time remove it. Counted here, not
+// with dblclick: preventDefault on pointerdown (which keeps the focus on the
+// zone) also stops the browser's mouse events, dblclick among them.
+const DOUBLE_CLICK_MS = 400;
 
 const HANDLE_CURSORS: Record<string, string> = {
   nw: "nwse-resize",
@@ -76,6 +102,7 @@ export default function EditorCanvas({
   const svgRef = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
+  const lastVertexClick = useRef<{ zoneId: string; index: number; time: number } | null>(null);
 
   // Paint and tab order, as on the showcase
   const zones = useMemo(() => plan.zones.toSorted((a, b) => a.zIndex - b.zIndex), [plan.zones]);
@@ -95,18 +122,48 @@ export default function EditorCanvas({
     return toPlanPoint(event.clientX, event.clientY, svgRef.current!.getBoundingClientRect(), plan.viewBox);
   }
 
-  function startDrag(event: PointerEvent, zone: ZoneResponse, handle: Handle | null) {
+  function startDrag(event: PointerEvent, zone: ZoneResponse, handle: Handle | null, start = shapeOf(zone)) {
     if (event.button !== 0) return;
     event.stopPropagation();
+    // The zone takes the focus, so the arrow keys and Tab go on from it. Without
+    // preventDefault the mouse's default would move the focus to the page when
+    // a handle is pressed.
+    event.preventDefault();
+    svgRef.current?.querySelector<SVGGElement>(`[data-zone="${zone.id}"]`)?.focus({ preventScroll: true });
     onSelect(zone.id);
     svgRef.current?.setPointerCapture?.(event.pointerId);
-    const start = shapeOf(zone);
-    setDrag({ zoneId: zone.id, handle, start, origin: pointAt(event) });
+    setDrag({
+      zoneId: zone.id,
+      handle,
+      start,
+      origin: pointAt(event),
+      before: shapeOf(zone),
+      client: [event.clientX, event.clientY],
+      moved: false,
+    });
     setDraft({ zoneId: zone.id, shape: start, released: false });
   }
 
-  // The dragged shape with the pointer where `event` has it
-  function shapeAt(event: PointerEvent, { handle, start, origin }: Drag): Shape {
+  // A vertex clicked twice in a row removes it; a triangle keeps its three
+  function vertexClicked(zoneId: string, index: number, time: number) {
+    const last = lastVertexClick.current;
+    const twice = last?.zoneId === zoneId && last.index === index && time - last.time < DOUBLE_CLICK_MS;
+    lastVertexClick.current = twice ? null : { zoneId, index, time };
+    const zone = plan.zones.find((item) => item.id === zoneId);
+    if (!twice || !zone) return;
+    const shape = removeVertex(zone.shape, index);
+    if (!sameShape(shape, zone.shape)) onShapeChange(zoneId, shape);
+  }
+
+  function movedFar(event: PointerEvent, { client, moved }: Drag): boolean {
+    return moved || Math.hypot(event.clientX - client[0], event.clientY - client[1]) >= DRAG_THRESHOLD_PX;
+  }
+
+  // The dragged shape with the pointer where `event` has it; the shape the
+  // drag started with while the pointer is still within the click threshold
+  function shapeAt(event: PointerEvent, drag: Drag): Shape {
+    const { handle, start, origin } = drag;
+    if (!movedFar(event, drag)) return start;
     const [x, y] = pointAt(event);
     return handle === null
       ? moveShape(start, x - origin[0], y - origin[1], plan.viewBox)
@@ -114,7 +171,9 @@ export default function EditorCanvas({
   }
 
   function moveDrag(event: PointerEvent) {
-    if (drag) setDraft({ zoneId: drag.zoneId, shape: shapeAt(event, drag), released: false });
+    if (!drag) return;
+    if (!drag.moved && movedFar(event, drag)) setDrag({ ...drag, moved: true });
+    setDraft({ zoneId: drag.zoneId, shape: shapeAt(event, drag), released: false });
   }
 
   // Released: saved if it changed, with the pointer where it was released; a
@@ -125,8 +184,10 @@ export default function EditorCanvas({
     svgRef.current?.releasePointerCapture?.(event.pointerId);
     setDrag(null);
     const shape = shapeAt(event, drag);
-    if (cancelled || sameShape(shape, drag.start)) {
+    // A midpoint clicked without a move still adds its vertex
+    if (cancelled || sameShape(shape, drag.before)) {
       setDraft(null);
+      if (!cancelled && typeof drag.handle === "number") vertexClicked(drag.zoneId, drag.handle, event.timeStamp);
       return;
     }
     onShapeChange(drag.zoneId, shape);
@@ -184,6 +245,7 @@ export default function EditorCanvas({
         return (
           <g
             key={zone.id}
+            data-zone={zone.id}
             role="button"
             tabIndex={0}
             aria-label={name}
@@ -225,22 +287,46 @@ export default function EditorCanvas({
 
       {selected && (
         <g aria-hidden="true">
-          {handlesOf(shapeOf(selected)).map(({ handle, x, y }) => (
-            <rect
-              key={String(handle)}
-              data-handle={handle}
-              x={x - handleSize / 2}
-              y={y - handleSize / 2}
-              width={handleSize}
-              height={handleSize}
+          {/* A polygon's edge middles: drag one, or click it, to add a vertex */}
+          {midpointsOf(shapeOf(selected)).map(({ edge, x, y }) => (
+            <circle
+              key={`mid-${edge}`}
+              data-midpoint={edge}
+              cx={x}
+              cy={y}
+              r={handleSize / 2.5}
               fill="#FAF7EF"
               stroke="#1B2E1F"
-              strokeWidth={1.5}
+              strokeWidth={1}
+              opacity={0.7}
               vectorEffect="non-scaling-stroke"
-              style={{ cursor: typeof handle === "number" ? "move" : HANDLE_CURSORS[handle] }}
-              onPointerDown={(event) => startDrag(event, selected, handle)}
+              style={{ cursor: "copy" }}
+              onPointerDown={(event) =>
+                startDrag(event, selected, edge + 1, insertVertex(shapeOf(selected), edge, [x, y], plan.viewBox))
+              }
             />
           ))}
+          {handlesOf(shapeOf(selected)).map(({ handle, x, y }) => {
+            const shape = shapeOf(selected);
+            const isVertex = typeof handle === "number";
+            return (
+              <rect
+                key={String(handle)}
+                data-handle={handle}
+                x={x - handleSize / 2}
+                y={y - handleSize / 2}
+                width={handleSize}
+                height={handleSize}
+                fill="#FAF7EF"
+                stroke="#1B2E1F"
+                strokeWidth={1.5}
+                vectorEffect="non-scaling-stroke"
+                // A vertex's double arrow points away from the polygon's center
+                style={{ cursor: isVertex ? resizeCursor(center(shape), [x, y]) : HANDLE_CURSORS[handle] }}
+                onPointerDown={(event) => startDrag(event, selected, handle)}
+              />
+            );
+          })}
         </g>
       )}
     </svg>

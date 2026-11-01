@@ -25,7 +25,8 @@ export interface Write {
   body?: Record<string, unknown>;
 }
 
-// `failNext` answers the next write with that status
+// `failNext` answers the next write with that status; `down` answers every
+// request with 502, as Vite's proxy does when the API is not running
 export function fakeEditorApi() {
   const api = {
     plan: {
@@ -43,6 +44,7 @@ export function fakeEditorApi() {
     } as PlanResponse,
     writes: [] as Write[],
     failNext: null as number | null,
+    down: false,
     gets: 0,
     // The bodies of zone PATCHes, in order
     get patches() {
@@ -53,6 +55,7 @@ export function fakeEditorApi() {
 
   vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
     const method = init.method ?? "GET";
+    if (api.down) return new Response("Bad Gateway", { status: 502 });
     if (method === "GET") {
       api.gets++;
       return url === `/api/plans/${PLAN}`

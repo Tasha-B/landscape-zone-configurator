@@ -156,6 +156,56 @@ function dragRadius(shape: Extract<Shape, { kind: "circle" }>, [px, py]: Point, 
   return { ...shape, r: clamp(r, MIN_RADIUS, Math.max(MIN_RADIUS, Math.floor(room))) };
 }
 
+// A polygon's edge middles: dragging one inserts a vertex there
+export interface Midpoint {
+  edge: number; // the edge from vertex `edge` to the next one
+  x: number;
+  y: number;
+}
+
+export function midpointsOf(shape: Shape): Midpoint[] {
+  if (shape.kind !== "polygon") return [];
+  const { points } = shape;
+  return points.map(([x1, y1], edge) => {
+    const [x2, y2] = points[(edge + 1) % points.length];
+    return { edge, x: (x1 + x2) / 2, y: (y1 + y2) / 2 };
+  });
+}
+
+// The polygon with a new vertex at `point` on edge `edge`, which becomes
+// vertex edge + 1
+export function insertVertex(shape: Shape, edge: number, point: Point, viewBox: ViewBox): Shape {
+  if (shape.kind !== "polygon" || !shape.points[edge]) return shape;
+  const points = [...shape.points];
+  points.splice(edge + 1, 0, clampPoint(point, viewBox));
+  return { ...shape, points };
+}
+
+export const MIN_POLYGON_POINTS = 3;
+
+// The polygon without vertex `index`; a triangle keeps its three
+export function removeVertex(shape: Shape, index: number): Shape {
+  if (shape.kind !== "polygon" || !shape.points[index] || shape.points.length <= MIN_POLYGON_POINTS) return shape;
+  return { ...shape, points: shape.points.filter((_, i) => i !== index) };
+}
+
+// A double arrow pointing away from the shape's center, as on a rect's
+// corners: the direction a vertex or handle there is usually dragged in
+export function resizeCursor(from: Point, to: Point): string {
+  const angle = (Math.atan2(to[1] - from[1], to[0] - from[0]) * 180) / Math.PI; // y grows downwards
+  const sector = Math.round(angle / 45); // -4 … 4: east is 0, south is 2
+  switch (((sector % 4) + 4) % 4) {
+    case 0:
+      return "ew-resize";
+    case 1:
+      return "nwse-resize";
+    case 2:
+      return "ns-resize";
+    default:
+      return "nesw-resize";
+  }
+}
+
 export function sameShape(a: Shape, b: Shape): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }

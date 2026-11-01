@@ -60,14 +60,13 @@ export interface Translations {
     saved: string;
     saveFailed: string;
     conflict: string;
+    offline: string;
     zonePanel: string;
     planPanel: string;
     panelHint: string;
     type: string;
     color: string;
     colorInvalid: string;
-    english: string;
-    russian: string;
     name: string;
     tagline: string;
     recommendation: string;
@@ -165,14 +164,13 @@ export const translations: Record<Lang, Translations> = {
       saved: "All changes saved",
       saveFailed: "Could not save. The change was undone.",
       conflict: "This plan was changed elsewhere and has been reloaded.",
+      offline: "No connection to the server. Changes are not saved until it is back.",
       zonePanel: "Zone",
       planPanel: "Plan",
       panelHint: "Select a zone to edit it. With no zone selected, this panel edits the plan.",
       type: "Type",
       color: "Color",
       colorInvalid: "Use the form #rrggbb",
-      english: "English",
-      russian: "Russian",
       name: "Name",
       tagline: "Tagline",
       recommendation: "Recommendation",
@@ -275,14 +273,13 @@ export const translations: Record<Lang, Translations> = {
       saved: "Все изменения сохранены",
       saveFailed: "Не удалось сохранить. Изменение отменено.",
       conflict: "План изменили в другом месте, мы его перезагрузили.",
+      offline: "Нет связи с сервером. Изменения не сохраняются, пока она не восстановится.",
       zonePanel: "Зона",
       planPanel: "План",
       panelHint: "Выберите зону, чтобы её редактировать. Без выбранной зоны здесь редактируется план.",
       type: "Тип",
       color: "Цвет",
       colorInvalid: "Нужен вид #rrggbb",
-      english: "Английский",
-      russian: "Русский",
       name: "Название",
       tagline: "Подзаголовок",
       recommendation: "Рекомендация",

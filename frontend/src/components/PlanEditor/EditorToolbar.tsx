@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useRovingTabIndex } from "../../lib/a11y/roving";
 import type { NewShapeKind } from "../../lib/editor/newZone";
 import { fill } from "../../lib/i18n/format";
 import type { Translations } from "../../lib/i18n/translations";
@@ -18,6 +19,8 @@ interface EditorToolbarProps {
   onDeleteConfirm: () => void;
   onDeleteCancel: () => void;
   status: string;
+  // Shown with the status while the server cannot be reached
+  onRetry?: () => void;
 }
 
 // Adding and deleting zones, and whether the changes are saved. Deleting
@@ -31,6 +34,7 @@ export default function EditorToolbar({
   onDeleteConfirm,
   onDeleteCancel,
   status,
+  onRetry,
 }: EditorToolbarProps) {
   const e = t.editor;
   // Asking moves the focus to Cancel, the safe choice, so Enter does not
@@ -39,6 +43,8 @@ export default function EditorToolbar({
   useEffect(() => {
     if (confirmingDelete) cancelRef.current?.focus();
   }, [confirmingDelete]);
+  // One stop for Tab; the arrow keys move between the buttons
+  const tool = useRovingTabIndex([true, true, true, selectedName !== null]);
 
   return (
     <div className="mb-sm flex min-h-10 flex-wrap items-center gap-xs">
@@ -54,16 +60,22 @@ export default function EditorToolbar({
         </div>
       ) : (
         <div role="toolbar" aria-label={e.toolbarLabel} className="flex flex-wrap items-center gap-xs">
-          <button type="button" className={QUIET} onClick={() => onAdd("rect")}>
+          <button type="button" className={QUIET} {...tool(0)} onClick={() => onAdd("rect")}>
             {e.addRect}
           </button>
-          <button type="button" className={QUIET} onClick={() => onAdd("circle")}>
+          <button type="button" className={QUIET} {...tool(1)} onClick={() => onAdd("circle")}>
             {e.addCircle}
           </button>
-          <button type="button" className={QUIET} onClick={() => onAdd("polygon")}>
+          <button type="button" className={QUIET} {...tool(2)} onClick={() => onAdd("polygon")}>
             {e.addPolygon}
           </button>
-          <button type="button" className={DANGER} disabled={selectedName === null} onClick={onDeleteRequest}>
+          <button
+            type="button"
+            className={DANGER}
+            {...tool(3)}
+            disabled={selectedName === null}
+            onClick={onDeleteRequest}
+          >
             {e.deleteZone}
           </button>
         </div>
@@ -71,6 +83,11 @@ export default function EditorToolbar({
       <p role="status" className="ml-auto font-body text-sm text-ink/60">
         {status}
       </p>
+      {onRetry && (
+        <button type="button" className={QUIET} onClick={onRetry}>
+          {t.editor.retry}
+        </button>
+      )}
     </div>
   );
 }

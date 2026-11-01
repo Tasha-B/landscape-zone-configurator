@@ -106,6 +106,140 @@ describe("the plan editor", () => {
     expect(api.patches[0].shape).toEqual({ kind: "polygon", points: [[400, 400], [500, 400], [470, 560]] });
   });
 
+  it("puts the focus on a zone pressed with the pointer, so the keys go on from it", async () => {
+    renderEditor();
+    await canvas();
+    fireEvent.pointerDown(zoneButton("Lounge"), { button: 0, clientX: 600, clientY: 300, pointerId: 1 });
+    expect(zoneButton("Lounge")).toHaveFocus();
+  });
+
+  it("adds a polygon vertex from an edge's midpoint, dragged or just clicked", async () => {
+    renderEditor();
+    const svg = await canvas();
+    fireEvent.pointerDown(zoneButton("Bay"), { button: 0, clientX: 450, clientY: 430, pointerId: 1 });
+    fireEvent.pointerUp(svg, { clientX: 450, clientY: 430, pointerId: 1 });
+    expect(document.querySelectorAll("[data-midpoint]")).toHaveLength(3);
+
+    // The edge from (400, 400) to (500, 400): its middle dragged up
+    const first = document.querySelector('[data-midpoint="0"]')!;
+    fireEvent.pointerDown(first, { button: 0, clientX: 450, clientY: 400, pointerId: 2 });
+    fireEvent.pointerMove(svg, { clientX: 455, clientY: 370, pointerId: 2 });
+    fireEvent.pointerUp(svg, { clientX: 455, clientY: 370, pointerId: 2 });
+    await waitFor(() => expect(api.patches).toHaveLength(1));
+    expect(api.patches[0].shape).toEqual({ kind: "polygon", points: [[400, 400], [455, 370], [500, 400], [450, 500]] });
+
+    // A click on a midpoint adds the vertex where it is
+    await waitFor(() => expect(document.querySelectorAll("[data-midpoint]")).toHaveLength(4));
+    const last = document.querySelector('[data-midpoint="3"]')!;
+    fireEvent.pointerDown(last, { button: 0, clientX: 425, clientY: 450, pointerId: 3 });
+    fireEvent.pointerUp(svg, { clientX: 425, clientY: 450, pointerId: 3 });
+    await waitFor(() => expect(api.patches).toHaveLength(2));
+    expect(api.patches[1]).toMatchObject({
+      version: 2,
+      shape: { points: [[400, 400], [455, 370], [500, 400], [450, 500], [425, 450]] },
+    });
+  });
+
+  // Two presses and releases without a move, as a double click with a real
+  // pointer arrives (the browser's dblclick does not: see EditorCanvas)
+  function clickVertex(index: number, x: number, y: number, svg: HTMLElement) {
+    const handle = document.querySelector(`[data-handle="${index}"]`)!;
+    fireEvent.pointerDown(handle, { button: 0, clientX: x, clientY: y, pointerId: 9 });
+    fireEvent.pointerUp(svg, { clientX: x, clientY: y, pointerId: 9 });
+  }
+
+  it("removes a polygon vertex clicked twice in a row, but not below three", async () => {
+    renderEditor();
+    const svg = await canvas();
+    fireEvent.pointerDown(zoneButton("Bay"), { button: 0, clientX: 450, clientY: 430, pointerId: 1 });
+    fireEvent.pointerUp(svg, { clientX: 450, clientY: 430, pointerId: 1 });
+
+    // A triangle: nothing to remove
+    clickVertex(1, 500, 400, svg);
+    clickVertex(1, 500, 400, svg);
+    expect(api.patches).toEqual([]);
+
+    const middle = document.querySelector('[data-midpoint="0"]')!;
+    fireEvent.pointerDown(middle, { button: 0, clientX: 450, clientY: 400, pointerId: 2 });
+    fireEvent.pointerUp(svg, { clientX: 450, clientY: 400, pointerId: 2 });
+    await waitFor(() => expect(document.querySelectorAll("[data-handle]")).toHaveLength(4));
+
+    // One click on each of two vertices removes nothing
+    clickVertex(2, 500, 400, svg);
+    clickVertex(3, 450, 500, svg);
+    expect(api.patches).toHaveLength(1);
+
+    clickVertex(3, 450, 500, svg);
+    await waitFor(() => expect(api.patches).toHaveLength(2));
+    expect(api.patches[1].shape).toEqual({ kind: "polygon", points: [[400, 400], [450, 400], [500, 400]] });
+  });
+
+  it("takes a press that moves less than a few pixels for a click, so a shaky double click still removes", async () => {
+    renderEditor();
+    const svg = await canvas();
+    fireEvent.pointerDown(zoneButton("Bay"), { button: 0, clientX: 450, clientY: 430, pointerId: 1 });
+    fireEvent.pointerUp(svg, { clientX: 452, clientY: 431, pointerId: 1 });
+    // Selecting with a shaky hand does not move the zone
+    expect(api.patches).toEqual([]);
+    const middle = document.querySelector('[data-midpoint="0"]')!;
+    fireEvent.pointerDown(middle, { button: 0, clientX: 450, clientY: 400, pointerId: 2 });
+    fireEvent.pointerUp(svg, { clientX: 450, clientY: 400, pointerId: 2 });
+    await waitFor(() => expect(document.querySelectorAll("[data-handle]")).toHaveLength(4));
+
+    const handle = () => document.querySelector('[data-handle="3"]')!;
+    fireEvent.pointerDown(handle(), { button: 0, clientX: 450, clientY: 500, pointerId: 3 });
+    fireEvent.pointerMove(svg, { clientX: 451, clientY: 502, pointerId: 3 });
+    fireEvent.pointerUp(svg, { clientX: 451, clientY: 502, pointerId: 3 });
+    fireEvent.pointerDown(handle(), { button: 0, clientX: 452, clientY: 501, pointerId: 3 });
+    fireEvent.pointerUp(svg, { clientX: 449, clientY: 500, pointerId: 3 });
+
+    await waitFor(() => expect(api.patches).toHaveLength(2));
+    expect(api.patches[1].shape).toEqual({ kind: "polygon", points: [[400, 400], [450, 400], [500, 400]] });
+  });
+
+  it("moves once the pointer has gone past the threshold, from where it was pressed", async () => {
+    renderEditor();
+    const svg = await canvas();
+    fireEvent.pointerDown(zoneButton("Reception"), { button: 0, clientX: 150, clientY: 150, pointerId: 1 });
+    fireEvent.pointerMove(svg, { clientX: 152, clientY: 150, pointerId: 1 });
+    expect(zoneButton("Reception").querySelector("rect")).toHaveAttribute("x", "100");
+    fireEvent.pointerMove(svg, { clientX: 160, clientY: 150, pointerId: 1 });
+    expect(zoneButton("Reception").querySelector("rect")).toHaveAttribute("x", "110");
+    // Back within the threshold, it still follows: once moved, always moved
+    fireEvent.pointerMove(svg, { clientX: 151, clientY: 150, pointerId: 1 });
+    expect(zoneButton("Reception").querySelector("rect")).toHaveAttribute("x", "101");
+    fireEvent.pointerUp(svg, { clientX: 151, clientY: 150, pointerId: 1 });
+    await waitFor(() => expect(api.patches).toHaveLength(1));
+    expect(api.patches[0].shape).toMatchObject({ x: 101, y: 100 });
+  });
+
+  it("does not take two slow clicks on a vertex for a double click", async () => {
+    renderEditor();
+    const svg = await canvas();
+    fireEvent.pointerDown(zoneButton("Bay"), { button: 0, clientX: 450, clientY: 430, pointerId: 1 });
+    fireEvent.pointerUp(svg, { clientX: 450, clientY: 430, pointerId: 1 });
+    const middle = document.querySelector('[data-midpoint="0"]')!;
+    fireEvent.pointerDown(middle, { button: 0, clientX: 450, clientY: 400, pointerId: 2 });
+    fireEvent.pointerUp(svg, { clientX: 450, clientY: 400, pointerId: 2 });
+    await waitFor(() => expect(document.querySelectorAll("[data-handle]")).toHaveLength(4));
+
+    clickVertex(3, 450, 500, svg);
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    clickVertex(3, 450, 500, svg);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(api.patches).toHaveLength(1);
+  });
+
+  it("gives a polygon's vertices double-arrow cursors pointing away from its center", async () => {
+    renderEditor();
+    const svg = await canvas();
+    fireEvent.pointerDown(zoneButton("Bay"), { button: 0, clientX: 450, clientY: 430, pointerId: 1 });
+    fireEvent.pointerUp(svg, { clientX: 450, clientY: 430, pointerId: 1 });
+    const cursors = [...document.querySelectorAll<SVGElement>("[data-handle]")].map((handle) => handle.style.cursor);
+    // Top-left, top-right, bottom of a triangle
+    expect(cursors).toEqual(["nwse-resize", "nesw-resize", "ns-resize"]);
+  });
+
   it("moves the focused zone with the arrow keys, each press saved in turn", async () => {
     const user = userEvent.setup();
     renderEditor();

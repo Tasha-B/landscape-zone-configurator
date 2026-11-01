@@ -36,7 +36,10 @@ export default function PlanEditor({ planId }: { planId: string }) {
     },
   });
 
-  if (isPending || isError || !plan) {
+  // Without a plan yet: loading, or why it could not be loaded. Once there is
+  // one, a failed reload (the server went away) keeps it on screen and only
+  // the status line says so.
+  if (!plan) {
     const missing = error instanceof ApiError && (error.status === 404 || error.status === 400);
     return (
       <PageMain title={e.title}>
@@ -98,9 +101,12 @@ export default function PlanEditor({ planId }: { planId: string }) {
     setSelectedId(zoneId);
   };
 
+  const offline = isError;
   const status = saving
     ? e.saving
-    : lastError === "conflict"
+    : offline
+      ? e.offline
+      : lastError === "conflict"
       ? e.conflict
       : lastError === "failed"
         ? e.saveFailed
@@ -129,6 +135,7 @@ export default function PlanEditor({ planId }: { planId: string }) {
             onDeleteConfirm={deleteSelected}
             onDeleteCancel={() => setConfirmingDelete(false)}
             status={status}
+            onRetry={offline && !isFetching ? () => void refetch() : undefined}
           />
           <div className={`${PAPER_SHEET_CLASS} p-sm`}>
             <EditorCanvas

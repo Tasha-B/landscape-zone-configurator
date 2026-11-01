@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
 import type { FloorPlan, Shape } from "../plan/types";
-import { dragHandle, handlesOf, MIN_RADIUS, MIN_RECT_SIZE, moveShape, sameShape } from "./geometry";
+import {
+  dragHandle,
+  handlesOf,
+  insertVertex,
+  midpointsOf,
+  MIN_RADIUS,
+  MIN_RECT_SIZE,
+  moveShape,
+  removeVertex,
+  resizeCursor,
+  sameShape,
+} from "./geometry";
 
 const sheet: FloorPlan["viewBox"] = [0, 0, 800, 600];
 const rect: Shape = { kind: "rect", x: 100, y: 100, width: 200, height: 100, rx: 4 };
@@ -127,5 +138,43 @@ describe("sameShape", () => {
   it("compares by value", () => {
     expect(sameShape(rect, { ...rect })).toBe(true);
     expect(sameShape(rect, { ...rect, x: 101 })).toBe(false);
+  });
+});
+
+describe("adding and removing a polygon's vertices", () => {
+  it("has a midpoint on each edge, the last one closing the outline", () => {
+    expect(midpointsOf(polygon)).toEqual([
+      { edge: 0, x: 35, y: 10 },
+      { edge: 1, x: 60, y: 25 },
+      { edge: 2, x: 35, y: 25 },
+    ]);
+    expect(midpointsOf(rect)).toEqual([]);
+  });
+
+  it("inserts a vertex after the edge's first one, rounded and on the sheet", () => {
+    expect(insertVertex(polygon, 0, [35.4, 2], sheet)).toEqual({ kind: "polygon", points: [[10, 10], [35, 2], [60, 10], [60, 40]] });
+    expect(insertVertex(polygon, 2, [-20, 30], sheet)).toEqual({ kind: "polygon", points: [[10, 10], [60, 10], [60, 40], [0, 30]] });
+    expect(insertVertex(polygon, 5, [1, 1], sheet)).toBe(polygon);
+    expect(insertVertex(circle, 0, [1, 1], sheet)).toBe(circle);
+  });
+
+  it("removes a vertex, but never below three", () => {
+    const square: Shape = { kind: "polygon", points: [[0, 0], [10, 0], [10, 10], [0, 10]] };
+    expect(removeVertex(square, 1)).toEqual({ kind: "polygon", points: [[0, 0], [10, 10], [0, 10]] });
+    expect(removeVertex(polygon, 0)).toBe(polygon);
+    expect(removeVertex(square, 9)).toBe(square);
+  });
+});
+
+describe("resizeCursor", () => {
+  it("points away from the center in one of four double arrows", () => {
+    const at = (x: number, y: number) => resizeCursor([0, 0], [x, y]);
+    expect([at(10, 0), at(-10, 1), at(0, 10), at(1, -10)]).toEqual(["ew-resize", "ew-resize", "ns-resize", "ns-resize"]);
+    expect([at(10, 10), at(-10, -10), at(10, -10), at(-10, 10)]).toEqual([
+      "nwse-resize",
+      "nwse-resize",
+      "nesw-resize",
+      "nesw-resize",
+    ]);
   });
 });

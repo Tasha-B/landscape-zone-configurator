@@ -84,24 +84,27 @@ describe("the editor's toolbar and panels", () => {
     expect(writes("DELETE")).toEqual([]);
   });
 
-  it("saves a zone's text when the field is left, with its whole language", async () => {
+  it("edits the texts of the page's language and saves one when it is left, with its whole language", async () => {
     const user = userEvent.setup();
     renderEditor();
     await loaded();
     select("Reception");
+    // English only: the page has no language switch yet
+    expect(screen.queryByDisplayValue("Reception (ru)")).not.toBeInTheDocument();
 
-    const name = within(screen.getByRole("group", { name: "Russian" })).getByLabelText("Name");
+    const name = screen.getByLabelText("Name");
     await user.clear(name);
-    await user.type(name, "  Приёмная ");
+    await user.type(name, "  Front desk ");
     expect(api.patches).toEqual([]);
     await user.tab();
 
     await waitFor(() => expect(api.patches).toHaveLength(1));
     expect(api.patches[0]).toEqual({
       version: 1,
-      content: { ru: { name: "Приёмная", tagline: "т", recommendation: "р", rationale: "п" } },
+      content: { en: { name: "Front desk", tagline: "t", recommendation: "r", rationale: "w" } },
     });
-    expect(name).toHaveValue("Приёмная");
+    expect(name).toHaveValue("Front desk");
+    expect(await screen.findByRole("button", { name: "Front desk" })).toBeInTheDocument();
   });
 
   it("does not send an empty text and says why", async () => {
@@ -110,7 +113,7 @@ describe("the editor's toolbar and panels", () => {
     await loaded();
     select("Reception");
 
-    const tagline = within(screen.getByRole("group", { name: "English" })).getByLabelText("Tagline");
+    const tagline = screen.getByLabelText("Tagline");
     await user.clear(tagline);
     await user.tab();
 
@@ -166,6 +169,47 @@ describe("the editor's toolbar and panels", () => {
       { version: 2, viewBox: [0, 0, 1000, 600] },
       { version: 3, background: "demo-office" },
     ]);
+  });
+
+  it("keeps the plan on screen when the server goes away, and says so", async () => {
+    const user = userEvent.setup();
+    renderEditor();
+    const svg = await screen.findByRole("group", { name: "Plan “Second floor”" });
+    api.down = true;
+
+    fireEvent.pointerDown(zoneButton("Reception"), { button: 0, clientX: 150, clientY: 150, pointerId: 1 });
+    fireEvent.pointerMove(svg, { clientX: 250, clientY: 150, pointerId: 1 });
+    fireEvent.pointerUp(svg, { clientX: 250, clientY: 150, pointerId: 1 });
+
+    await waitFor(() =>
+      expect(status()).toHaveTextContent("No connection to the server. Changes are not saved until it is back."),
+    );
+    expect(screen.getByRole("group", { name: "Plan “Second floor”" })).toBeInTheDocument();
+    expect(zoneButton("Reception").querySelector("rect")).toHaveAttribute("x", "100");
+
+    api.down = false;
+    await user.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(status()).toHaveTextContent("Could not save. The change was undone."));
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+  });
+
+  it("is one Tab stop for the toolbar and one for the palette, moved through with the arrows", async () => {
+    const user = userEvent.setup();
+    renderEditor();
+    await loaded();
+
+    const tools = within(screen.getByRole("toolbar", { name: "Zone tools" })).getAllByRole("button");
+    expect(tools.map((button) => button.tabIndex)).toEqual([0, -1, -1, -1]);
+    tools[0].focus();
+    await user.keyboard("{ArrowRight}");
+    expect(tools[1]).toHaveFocus();
+    // Delete zone is disabled while nothing is selected: skipped
+    await user.keyboard("{ArrowRight}{ArrowRight}");
+    expect(tools[0]).toHaveFocus();
+
+    select("Reception");
+    const swatches = within(screen.getByRole("group", { name: "Color" })).getAllByRole("button");
+    expect(swatches.filter((swatch) => swatch.tabIndex === 0)).toHaveLength(1);
   });
 
   it("says when a change was undone, and when the plan was changed elsewhere", async () => {
