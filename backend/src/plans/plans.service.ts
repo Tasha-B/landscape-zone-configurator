@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import type { Prisma } from "../generated/prisma/client.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 import { versionedUpdate } from "../prisma/versioned-update.js";
 import type { CreatePlanDto, UpdatePlanDto } from "./plan.dto.js";
@@ -6,8 +7,11 @@ import type { PlanSummaryResponse } from "./plan-summary.response.js";
 import { toPlanResponse } from "./plan.mapper.js";
 import type { PlanResponse } from "./plan.response.js";
 
-// The plan with its zones in legend order and their content
-const WITH_ZONES = { zones: { orderBy: { position: "asc" }, include: { content: true } } } as const;
+// The plan with its zones in legend order and their content. Two zones
+// added at the same moment can share a position; the older one comes first.
+const WITH_ZONES = {
+  zones: { orderBy: [{ position: "asc" }, { createdAt: "asc" }], include: { content: true } },
+} satisfies Prisma.FloorPlanInclude;
 
 @Injectable()
 export class PlansService {

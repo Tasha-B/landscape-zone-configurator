@@ -12,3 +12,8 @@ export const ZONE_TYPE_NAMES = {
 } as const satisfies Record<ZoneType, string>;
 
 export type ZoneTypeName = (typeof ZONE_TYPE_NAMES)[ZoneType];
+
+// The other direction, for writing a type the API received
+export const ZONE_TYPES_BY_NAME = Object.fromEntries(
+  Object.entries(ZONE_TYPE_NAMES).map(([type, name]) => [name, type]),
+) as Record<ZoneTypeName, ZoneType>;

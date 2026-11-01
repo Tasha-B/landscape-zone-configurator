@@ -402,6 +402,128 @@
           "plans"
         ]
       }
+    },
+    "/api/plans/{id}/zones": {
+      "post": {
+        "operationId": "zones_create",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateZoneDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new zone, last in the legend, at version 1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZoneResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The id is not a UUID or the body is invalid"
+          },
+          "404": {
+            "description": "No plan has this id"
+          }
+        },
+        "tags": [
+          "zones"
+        ]
+      }
+    },
+    "/api/zones/{id}": {
+      "patch": {
+        "operationId": "zones_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateZoneDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The changed zone, at the next version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZoneResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The id is not a UUID, the body is invalid or changes nothing"
+          },
+          "404": {
+            "description": "No zone has this id"
+          },
+          "409": {
+            "description": "The zone has changed since the version sent; reload it"
+          }
+        },
+        "tags": [
+          "zones"
+        ]
+      },
+      "delete": {
+        "operationId": "zones_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The zone and its content are deleted"
+          },
+          "400": {
+            "description": "The id is not a UUID"
+          },
+          "404": {
+            "description": "No zone has this id"
+          }
+        },
+        "tags": [
+          "zones"
+        ]
+      }
     }
   },
   "info": {
@@ -813,6 +935,160 @@
             ],
             "nullable": true,
             "description": "null or left out: a blank sheet"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The version the change is based on; 409 if it is stale"
+          }
+        },
+        "required": [
+          "version"
+        ]
+      },
+      "CreateZoneDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ZoneType"
+              }
+            ]
+          },
+          "shape": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RectShape"
+              },
+              {
+                "$ref": "#/components/schemas/CircleShape"
+              },
+              {
+                "$ref": "#/components/schemas/PolygonShape"
+              }
+            ],
+            "discriminator": {
+              "propertyName": "kind",
+              "mapping": {
+                "rect": "#/components/schemas/RectShape",
+                "circle": "#/components/schemas/CircleShape",
+                "polygon": "#/components/schemas/PolygonShape"
+              }
+            }
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "example": "#C9962A",
+            "description": "Marker, hover tint and legend swatch"
+          },
+          "zIndex": {
+            "type": "integer",
+            "description": "Paint and tab order; default: above the plan's other zones"
+          },
+          "hitPadding": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "description": "null: the frontend default (20)"
+          },
+          "label": {
+            "nullable": true,
+            "description": "null: placed at the shape center",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ZoneLabel"
+              }
+            ]
+          },
+          "content": {
+            "description": "Both languages: the frontend shows every zone in both",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ZoneContentByLang"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "shape",
+          "color",
+          "content"
+        ]
+      },
+      "ZoneContentPatch": {
+        "type": "object",
+        "properties": {
+          "en": {
+            "$ref": "#/components/schemas/ZoneContent"
+          },
+          "ru": {
+            "$ref": "#/components/schemas/ZoneContent"
+          }
+        }
+      },
+      "UpdateZoneDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ZoneType"
+              }
+            ]
+          },
+          "shape": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RectShape"
+              },
+              {
+                "$ref": "#/components/schemas/CircleShape"
+              },
+              {
+                "$ref": "#/components/schemas/PolygonShape"
+              }
+            ],
+            "discriminator": {
+              "propertyName": "kind",
+              "mapping": {
+                "rect": "#/components/schemas/RectShape",
+                "circle": "#/components/schemas/CircleShape",
+                "polygon": "#/components/schemas/PolygonShape"
+              }
+            }
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "example": "#C9962A",
+            "description": "Marker, hover tint and legend swatch"
+          },
+          "zIndex": {
+            "type": "integer",
+            "description": "Paint and tab order; default: above the plan's other zones"
+          },
+          "hitPadding": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "description": "null: the frontend default (20)"
+          },
+          "label": {
+            "nullable": true,
+            "description": "null: placed at the shape center",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ZoneLabel"
+              }
+            ]
+          },
+          "content": {
+            "$ref": "#/components/schemas/ZoneContentPatch"
           },
           "version": {
             "type": "integer",

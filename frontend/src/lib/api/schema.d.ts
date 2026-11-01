@@ -52,6 +52,38 @@ export interface paths {
         patch: operations["plans_update"];
         trace?: never;
     };
+    "/api/plans/{id}/zones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["zones_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/zones/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["zones_remove"];
+        options?: never;
+        head?: never;
+        patch: operations["zones_update"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -188,6 +220,45 @@ export interface components {
              * @enum {string|null}
              */
             background?: "demo-office" | null;
+            /** @description The version the change is based on; 409 if it is stale */
+            version: number;
+        };
+        CreateZoneDto: {
+            type: components["schemas"]["ZoneType"];
+            shape: components["schemas"]["RectShape"] | components["schemas"]["CircleShape"] | components["schemas"]["PolygonShape"];
+            /**
+             * @description Marker, hover tint and legend swatch
+             * @example #C9962A
+             */
+            color: string;
+            /** @description Paint and tab order; default: above the plan's other zones */
+            zIndex?: number;
+            /** @description null: the frontend default (20) */
+            hitPadding?: number | null;
+            /** @description null: placed at the shape center */
+            label?: components["schemas"]["ZoneLabel"] | null;
+            /** @description Both languages: the frontend shows every zone in both */
+            content: components["schemas"]["ZoneContentByLang"];
+        };
+        ZoneContentPatch: {
+            en?: components["schemas"]["ZoneContent"];
+            ru?: components["schemas"]["ZoneContent"];
+        };
+        UpdateZoneDto: {
+            type?: components["schemas"]["ZoneType"];
+            shape?: components["schemas"]["RectShape"] | components["schemas"]["CircleShape"] | components["schemas"]["PolygonShape"];
+            /**
+             * @description Marker, hover tint and legend swatch
+             * @example #C9962A
+             */
+            color?: string;
+            /** @description Paint and tab order; default: above the plan's other zones */
+            zIndex?: number;
+            /** @description null: the frontend default (20) */
+            hitPadding?: number | null;
+            /** @description null: placed at the shape center */
+            label?: components["schemas"]["ZoneLabel"] | null;
+            content?: components["schemas"]["ZoneContentPatch"];
             /** @description The version the change is based on; 409 if it is stale */
             version: number;
         };
@@ -508,6 +579,127 @@ export interface operations {
                 content?: never;
             };
             /** @description The plan has changed since the version sent; reload it */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    zones_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateZoneDto"];
+            };
+        };
+        responses: {
+            /** @description The new zone, last in the legend, at version 1 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ZoneResponse"];
+                };
+            };
+            /** @description The id is not a UUID or the body is invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No plan has this id */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    zones_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The zone and its content are deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The id is not a UUID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No zone has this id */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    zones_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateZoneDto"];
+            };
+        };
+        responses: {
+            /** @description The changed zone, at the next version */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ZoneResponse"];
+                };
+            };
+            /** @description The id is not a UUID, the body is invalid or changes nothing */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No zone has this id */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The zone has changed since the version sent; reload it */
             409: {
                 headers: {
                     [name: string]: unknown;

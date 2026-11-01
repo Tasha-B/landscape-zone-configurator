@@ -26,11 +26,17 @@ export const IsFiniteNumber = () => IsNumber(FINITE);
 // would let null reach columns that cannot hold it.
 export const IsOmittable = () => ValidateIf((_, value) => value !== undefined);
 
-// A PATCH changes something: a body with nothing but `version` would only
-// raise the version
+// A PATCH changes something: a body with nothing but `version`, or with only
+// empty objects besides it (`content: {}`), would only raise the version
 export function assertChanges(dto: { version: number }): void {
-  const changed = Object.entries(dto).some(([key, value]) => key !== "version" && value !== undefined);
+  const changed = Object.entries(dto).some(([key, value]) => key !== "version" && !isEmpty(value));
   if (!changed) throw new BadRequestException("Nothing to update: send at least one field besides version");
+}
+
+function isEmpty(value: unknown): boolean {
+  if (value === undefined) return true;
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
+  return Object.values(value).every((item) => item === undefined);
 }
 
 // The paths of the invalid properties ("shape.points"), for the DTO unit
