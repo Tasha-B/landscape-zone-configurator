@@ -119,7 +119,7 @@ GET    /api/health                healthcheck
 GET    /api/docs                  Swagger UI (the document at /api/docs-json)
 ```
 
-Built so far: `GET /api/plans/:id`, `/api/health` and `/api/docs` (phase 4). The OpenAPI document is committed as `backend/openapi.json`, and the frontend's types are generated from it ([phase-4-read-api.md](phase-4-read-api.md#contract-openapi--frontend-types)).
+Built so far: every endpoint above. The read path, Swagger and health came in phase 4 ([phase-4-read-api.md](phase-4-read-api.md)), the writes in phase 5 ([phase-5-crud.md](phase-5-crud.md)); the WebSocket namespace below comes in phase 7. The OpenAPI document is committed as `backend/openapi.json`, and the frontend's types are generated from it ([phase-4-read-api.md](phase-4-read-api.md#contract-openapi--frontend-types)).
 
 WebSocket namespace `/plans`:
 

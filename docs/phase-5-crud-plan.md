@@ -1,6 +1,6 @@
 # Phase 5 — CRUD: plan
 
-Part of the [roadmap](phase-0-roadmap.md). The result will be recorded in `phase-5-crud.md`.
+Part of the [roadmap](phase-0-roadmap.md). The result is recorded in [phase-5-crud.md](phase-5-crud.md).
 
 ## Goal
 
@@ -137,18 +137,18 @@ Each step is a separate commit, and both apps build after every one.
 
 1. **Plan.** This document. Tick the last acceptance box of phase 4 (both CI jobs were green on PR #6). In the roadmap, add the open question about the deployed demo plan (decision 1) and `version` on `FloorPlan` in the data model.
 2. **Plan version.** Migration `add_plan_version`; `version` in `PlanResponse` and the mapper; regenerate the contract.
-3. **Validation.** Global `ValidationPipe`; `shape.ts` with validators and the discriminator; the zone mapper split out; DTO unit tests. No new endpoints yet.
+3. **Validation.** Global `ValidationPipe`; `shape.ts` with validators and the discriminator; the zone mapper split out; DTO unit tests. No new endpoints yet. *(Done; the shape classes, zone response, mapper and type names went to `zones/`, and the discriminator worked without the fallback.)*
 4. **Plan endpoints.** `GET /api/plans`, `POST`, `PATCH`, `DELETE` with e2e tests; regenerate the contract.
-5. **Zone endpoints.** `ZonesModule` with `POST`, `PATCH`, `DELETE` and e2e tests, including the concurrent `PATCH`; regenerate the contract.
+5. **Zone endpoints.** `ZonesModule` with `POST`, `PATCH`, `DELETE` and e2e tests, including the concurrent `PATCH`; regenerate the contract. *(Done; zones that tie on `position` are ordered by creation time.)*
 6. **Docs.** `phase-5-crud.md`, the roadmap (built endpoints), the README (writing through Swagger UI).
 
 ## Acceptance criteria
 
-- [ ] In Swagger UI a plan can be created, given zones, renamed, have a zone changed and be deleted, and each change shows in `GET /api/plans/:id`.
-- [ ] Invalid bodies are `400` with the field named; unknown fields are `400`; unknown ids are `404`.
-- [ ] A `PATCH` of a plan or a zone with a stale version is `409`, and two concurrent `PATCH` requests on one version give one `200` and one `409`.
-- [ ] Every new endpoint is in `openapi.json` with its errors, and the frontend's generated types include the request bodies.
-- [ ] The page looks and works as after phase 4.
+- [x] In Swagger UI a plan can be created, given zones, renamed, have a zone changed and be deleted, and each change shows in `GET /api/plans/:id`.
+- [x] Invalid bodies are `400` with the field named; unknown fields are `400`; unknown ids are `404`.
+- [x] A `PATCH` of a plan or a zone with a stale version is `409`, and two concurrent `PATCH` requests on one version give one `200` and one `409`.
+- [x] Every new endpoint is in `openapi.json` with its errors, and the frontend's generated types include the request bodies.
+- [x] The page looks and works as after phase 4.
 - [ ] Both CI jobs are green.
 
 ## Out of scope
