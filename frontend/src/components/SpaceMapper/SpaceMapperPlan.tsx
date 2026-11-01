@@ -1,5 +1,6 @@
-import { useMemo, type CSSProperties, type ReactNode, type SVGAttributes } from "react";
+import { useMemo, type CSSProperties, type SVGAttributes } from "react";
 import { motion } from "framer-motion";
+import { renderShape, withAlpha } from "../Plan/shapes";
 import { PlanAnnotations, PlanBackground } from "./PlanBackground";
 import type { Lang, Translations } from "../../lib/i18n/translations";
 import { area, center, padShape } from "../../lib/plan/geometry";
@@ -45,34 +46,6 @@ const LABEL_FONT_SIZE = 22;
 const AREA_CAPTION_DY = 22;
 const PALETTE_FIRST_Y = 100;
 const PALETTE_STEP_Y = 24;
-
-function withAlpha(hex: string, alpha: number) {
-  const value = parseInt(hex.slice(1), 16);
-  return `rgba(${(value >> 16) & 255},${(value >> 8) & 255},${value & 255},${alpha})`;
-}
-
-function renderShape(shape: Shape, props: SVGAttributes<SVGElement>, children?: ReactNode) {
-  switch (shape.kind) {
-    case "rect":
-      return (
-        <rect x={shape.x} y={shape.y} width={shape.width} height={shape.height} rx={shape.rx} {...props}>
-          {children}
-        </rect>
-      );
-    case "circle":
-      return (
-        <circle cx={shape.cx} cy={shape.cy} r={shape.r} {...props}>
-          {children}
-        </circle>
-      );
-    case "polygon":
-      return (
-        <polygon points={shape.points.map((point) => point.join(",")).join(" ")} {...props}>
-          {children}
-        </polygon>
-      );
-  }
-}
 
 // Rects and circles grow by the padding; a polygon keeps its outline and
 // gets a transparent stroke 2 × padding wide that still takes the clicks

@@ -8,9 +8,11 @@ describe("translations", () => {
   const langs = Object.keys(translations) as Lang[];
 
   it.each(langs)("%s has no blank strings", (lang) => {
-    const blank = Object.entries(translations[lang].map)
-      .filter(([key, value]) => !MAY_BE_EMPTY.has(key) && value.trim() === "")
-      .map(([key]) => key);
+    const blank = Object.entries(translations[lang]).flatMap(([section, texts]) =>
+      Object.entries(texts as Record<string, string>)
+        .filter(([key, value]) => !MAY_BE_EMPTY.has(key) && value.trim() === "")
+        .map(([key]) => `${section}.${key}`),
+    );
 
     expect(blank).toEqual([]);
   });

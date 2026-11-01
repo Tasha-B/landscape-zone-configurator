@@ -1,10 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError, fetchPlan, toFloorPlan } from "./plans";
+import { ApiError } from "./client";
+import {
+  createPlan,
+  createZone,
+  deletePlan,
+  deleteZone,
+  fetchPlan,
+  listPlans,
+  toFloorPlan,
+  updatePlan,
+  updateZone,
+} from "./plans";
 import { shouldRetry } from "./queryClient";
-import type { components } from "./schema";
-
-type PlanResponse = components["schemas"]["PlanResponse"];
-type ZoneResponse = components["schemas"]["ZoneResponse"];
+import type { PlanResponse, ZoneResponse } from "./types";
 
 const content = { name: "Reception", tagline: "t", recommendation: "r", rationale: "why" };
 
@@ -83,7 +91,10 @@ describe("fetchPlan", () => {
 
     const result = await fetchPlan("00000000-0000-4000-8000-000000000001", signal);
 
-    expect(fetchMock).toHaveBeenCalledWith("/api/plans/00000000-0000-4000-8000-000000000001", { signal });
+    expect(fetchMock).toHaveBeenCalledWith("/api/plans/00000000-0000-4000-8000-000000000001", {
+      method: "GET",
+      signal,
+    });
     expect(result.zones).toHaveLength(1);
   });
 
@@ -94,6 +105,42 @@ describe("fetchPlan", () => {
 
     expect(error).toBeInstanceOf(ApiError);
     expect(error).toMatchObject({ status: 404 });
+  });
+});
+
+describe("the endpoint functions", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const json = { "Content-Type": "application/json" };
+  const zoneBody = {
+    type: "custom" as const,
+    shape: { kind: "circle" as const, cx: 1, cy: 2, r: 3 },
+    color: "#123456",
+    content: { en: content, ru: content },
+  };
+
+  it.each([
+    ["listPlans", () => listPlans(), "GET", "/api/plans", undefined],
+    ["createPlan", () => createPlan({ name: "A", viewBox: [0, 0, 800, 600], pxPerMeter: 32 }), "POST", "/api/plans",
+      { name: "A", viewBox: [0, 0, 800, 600], pxPerMeter: 32 }],
+    ["updatePlan", () => updatePlan("p1", { version: 2, name: "B" }), "PATCH", "/api/plans/p1", { version: 2, name: "B" }],
+    ["deletePlan", () => deletePlan("p1"), "DELETE", "/api/plans/p1", undefined],
+    ["createZone", () => createZone("p1", zoneBody), "POST", "/api/plans/p1/zones", zoneBody],
+    ["updateZone", () => updateZone("z1", { version: 3, color: "#654321" }), "PATCH", "/api/zones/z1",
+      { version: 3, color: "#654321" }],
+    ["deleteZone", () => deleteZone("z1"), "DELETE", "/api/zones/z1", undefined],
+  ])("%s sends %s %s", async (_, call, method, url, body) => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await call();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      url,
+      body === undefined ? { method, signal: undefined } : { method, signal: undefined, headers: json, body: JSON.stringify(body) },
+    );
   });
 });
 
