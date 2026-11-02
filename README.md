@@ -37,6 +37,7 @@ docs/       project documentation
 - [Phase 5 — CRUD](docs/phase-5-crud.md): the endpoints, versions and `409`, validation by shape kind, tests, findings
 - [Phase 6 — Editor: plan](docs/phase-6-editor-plan.md): the plans page and the editor, routing, saving each change with rollback and `409` handling
 - [Phase 6 — Editor](docs/phase-6-editor.md): the pages, editing on the canvas and in the panels, pending changes over the confirmed plan, checks, findings
+- [Phase 7 — Realtime: plan](docs/phase-7-realtime-plan.md): Socket.IO rooms per plan, events after each saved change, the cache moving only forward, the editor under other viewers' changes
 
 ## Run locally
 
