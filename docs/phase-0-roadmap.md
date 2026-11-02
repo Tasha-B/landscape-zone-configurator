@@ -163,6 +163,7 @@ Editor features asked for while trying phase 6, kept out of it so that it could 
 Questions that are not decided yet but block a later phase. Each one is settled in the plan of the phase named in it, and moves into that plan's decisions.
 
 1. **The demo plan on a deployed API** (phase 9). Without auth, anyone who reaches a public API can change or delete the demo office, and the page then shows its error state. The options include making the demo plan read-only, reseeding it on a schedule or on start, or deploying the API only behind auth. Raised 2026-11-01 in the [phase 5 plan](phase-5-crud-plan.md#decisions-taken-before-the-plan), where the demo plan stays unprotected for local development.
+2. **Separating users before a public deployment** (phase 9). There are no users today: every plan is open to everyone who reaches the API, to change or delete, and from phase 7 to follow live over the socket by its id. Auth and plan owners are phase 10, which is optional and comes after the deployment. The options include making phase 10 required and moving it before the deployment, or deploying without auth only what is safe to show, such as a read-only demo plan. Raised 2026-11-02 while planning [phase 7](phase-7-realtime-plan.md#out-of-scope), which does not change who can reach what.
 
 Decided:
 

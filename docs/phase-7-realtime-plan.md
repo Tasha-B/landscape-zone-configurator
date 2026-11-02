@@ -21,7 +21,7 @@ REST stays the only way to write and the source of truth. The socket only report
 
 ## Decisions taken before the plan
 
-*(Proposed 2026-11-02, awaiting confirmation.)*
+*(Decided 2026-11-02.)*
 
 1. **Both the editor and the showcase are live**, as the roadmap's "everyone viewing a plan" says. The plans list is not: it refetches when it is opened.
 2. **Plans have events too.** The roadmap names only zone events, but a renamed or resized plan, or a deleted one, must also reach viewers. `plan.updated` and `plan.deleted` join them.
