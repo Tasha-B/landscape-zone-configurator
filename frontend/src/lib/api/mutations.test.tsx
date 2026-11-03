@@ -134,8 +134,12 @@ describe("editing a plan", () => {
       { wrapper },
     );
     await waitFor(() => expect(hook.result.current.plan.data).toBeDefined());
-    return hook;
+    return { ...hook, client };
   }
+
+  // What reaches the cache while an answer is on its way, as an event will
+  const confirm = (hook: Awaited<ReturnType<typeof renderEditor>>, update: (plan: PlanResponse) => PlanResponse) =>
+    act(() => hook.client.setQueryData<PlanResponse>(["plan", "p1"], (plan) => plan && update(plan)));
 
   const zoneOf = (plan: PlanResponse | undefined, id: string) => plan?.zones.find((item) => item.id === id);
   const settled = (hook: Awaited<ReturnType<typeof renderEditor>>) =>
@@ -251,5 +255,62 @@ describe("editing a plan", () => {
     expect(api.writes[0].body).toEqual({ name: "Renamed", viewBox: [0, 0, 1000, 700], version: 1 });
     expect(hook.result.current.plan.data).toMatchObject({ name: "Renamed", version: 2 });
     expect(hook.result.current.plan.data?.zones).toHaveLength(2);
+  });
+
+  describe("when the answer is older than what the cache holds", () => {
+    it("keeps a newer version of the zone", async () => {
+      const hook = await renderEditor();
+      api.hold();
+      act(() => hook.result.current.edits.updateZone("a", { color: "#000000" }));
+      await waitFor(() => expect(api.writes).toHaveLength(1));
+
+      const newer = zone("a", { color: "#ffffff", version: 5 });
+      confirm(hook, (plan) => ({ ...plan, zones: [newer, plan.zones[1]] }));
+      api.release();
+      await settled(hook);
+
+      expect(zoneOf(hook.result.current.plan.data, "a")).toEqual(newer);
+    });
+
+    it("does not bring back a zone deleted meanwhile", async () => {
+      const hook = await renderEditor();
+      api.hold();
+      act(() => hook.result.current.edits.updateZone("a", { color: "#000000" }));
+      await waitFor(() => expect(api.writes).toHaveLength(1));
+
+      confirm(hook, (plan) => ({ ...plan, zones: [plan.zones[1]] }));
+      api.release();
+      await settled(hook);
+
+      expect(hook.result.current.plan.data?.zones.map((item) => item.id)).toEqual(["b"]);
+    });
+
+    it("keeps the zones that changed while the plan was being saved", async () => {
+      const hook = await renderEditor();
+      api.hold();
+      act(() => hook.result.current.edits.updatePlan({ name: "Renamed" }));
+      await waitFor(() => expect(api.writes).toHaveLength(1));
+
+      const added = zone("c", { color: "#ffffff" });
+      confirm(hook, (plan) => ({ ...plan, zones: [...plan.zones, added] }));
+      api.release();
+      await settled(hook);
+
+      expect(hook.result.current.plan.data).toMatchObject({ name: "Renamed", version: 2 });
+      expect(hook.result.current.plan.data?.zones.map((item) => item.id)).toEqual(["a", "b", "c"]);
+    });
+
+    it("keeps newer plan fields", async () => {
+      const hook = await renderEditor();
+      api.hold();
+      act(() => hook.result.current.edits.updatePlan({ name: "Renamed" }));
+      await waitFor(() => expect(api.writes).toHaveLength(1));
+
+      confirm(hook, (plan) => ({ ...plan, name: "Newer", version: 5 }));
+      api.release();
+      await settled(hook);
+
+      expect(hook.result.current.plan.data).toMatchObject({ name: "Newer", version: 5 });
+    });
   });
 });

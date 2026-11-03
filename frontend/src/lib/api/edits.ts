@@ -47,16 +47,29 @@ function defined<T extends object>(fields: T): Partial<T> {
   return Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined)) as Partial<T>;
 }
 
-// The server's answers, put into the cached plan
+// What the server says, put into the cached plan. Answers and events arrive
+// in any order (an event often overtakes the answer to its own request), so
+// the cache only moves forward: anything older than what it holds is ignored.
 
 export function withZone(plan: PlanResponse, zone: ZoneResponse): PlanResponse {
   const known = plan.zones.some((item) => item.id === zone.id);
+  return known ? withUpdatedZone(plan, zone) : { ...plan, zones: [...plan.zones, zone] };
+}
+
+// An unknown zone stays out: it was deleted while this change was on its way
+export function withUpdatedZone(plan: PlanResponse, zone: ZoneResponse): PlanResponse {
   return {
     ...plan,
-    zones: known ? plan.zones.map((item) => (item.id === zone.id ? zone : item)) : [...plan.zones, zone],
+    zones: plan.zones.map((item) => (item.id === zone.id && zone.version >= item.version ? zone : item)),
   };
 }
 
 export function withoutZone(plan: PlanResponse, zoneId: string): PlanResponse {
   return { ...plan, zones: plan.zones.filter((zone) => zone.id !== zoneId) };
+}
+
+// The plan's own fields. The zones stay: those in a PATCH answer can be older
+// than what zone events have brought since.
+export function withPlanFields(plan: PlanResponse, fields: Omit<PlanResponse, "zones">): PlanResponse {
+  return fields.version >= plan.version ? { ...plan, ...fields, zones: plan.zones } : plan;
 }

@@ -1,7 +1,7 @@
 import { useMutation, useMutationState, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { ApiError } from "./client";
-import { withEdits, withoutZone, withZone, type PlanEdit } from "./edits";
+import { withEdits, withoutZone, withPlanFields, withUpdatedZone, withZone, type PlanEdit } from "./edits";
 import {
   createPlan,
   createZone,
@@ -82,8 +82,7 @@ export function usePlanEdits(planId: string, { onSaveError }: PlanEditsOptions =
     ...shared,
     mutationFn: (edit: Extract<PlanEdit, { kind: "updatePlan" }>) =>
       updatePlan(planId, { ...edit.changes, version: confirmed().version }),
-    // Sent one at a time, so the answer is the server's whole plan as of now
-    onSuccess: (plan: PlanResponse) => commit(() => plan),
+    onSuccess: (answer: PlanResponse) => commit((plan) => withPlanFields(plan, answer)),
   });
 
   const createMutation = useMutation({
@@ -96,7 +95,7 @@ export function usePlanEdits(planId: string, { onSaveError }: PlanEditsOptions =
     ...shared,
     mutationFn: (edit: Extract<PlanEdit, { kind: "updateZone" }>) =>
       updateZone(edit.zoneId, { ...edit.changes, version: confirmedZone(edit.zoneId).version }),
-    onSuccess: (zone) => commit((plan) => withZone(plan, zone)),
+    onSuccess: (zone) => commit((plan) => withUpdatedZone(plan, zone)),
   });
 
   const deleteMutation = useMutation({
