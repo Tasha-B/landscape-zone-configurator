@@ -1,4 +1,4 @@
-import type { CreateZoneBody, PlanChanges, PlanResponse, ZoneChanges, ZoneResponse } from "./types";
+import type { CreateZoneBody, PlanChanges, PlanFields, PlanResponse, ZoneChanges, ZoneResponse } from "./types";
 
 // One change the editor sends. While its request is pending, the editor
 // shows it on top of the plan the server last confirmed; once the request
@@ -70,6 +70,6 @@ export function withoutZone(plan: PlanResponse, zoneId: string): PlanResponse {
 
 // The plan's own fields. The zones stay: those in a PATCH answer can be older
 // than what zone events have brought since.
-export function withPlanFields(plan: PlanResponse, fields: Omit<PlanResponse, "zones">): PlanResponse {
+export function withPlanFields(plan: PlanResponse, fields: PlanFields): PlanResponse {
   return fields.version >= plan.version ? { ...plan, ...fields, zones: plan.zones } : plan;
 }

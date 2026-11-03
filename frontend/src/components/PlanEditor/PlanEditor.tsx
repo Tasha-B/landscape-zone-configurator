@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { ApiError } from "../../lib/api/client";
+import { usePlanLive } from "../../lib/api/live";
 import { useEditedPlan, usePlanEdits, type SaveErrorKind } from "../../lib/api/mutations";
 import type { PlanChanges, ZoneChanges } from "../../lib/api/types";
 import { newZoneBody, type NewShapeKind } from "../../lib/editor/newZone";
@@ -22,6 +23,7 @@ export default function PlanEditor({ planId }: { planId: string }) {
   const { lang, t } = useLanguage();
   const e = t.editor;
   const { data: plan, isPending, isError, error, isFetching, refetch, saving } = useEditedPlan(planId);
+  usePlanLive(planId);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   // For the status line: whether anything was changed yet, and how the last
