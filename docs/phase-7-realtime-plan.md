@@ -1,6 +1,6 @@
 # Phase 7 — Realtime: plan
 
-Part of the [roadmap](phase-0-roadmap.md). The result will be recorded in `phase-7-realtime.md`.
+Part of the [roadmap](phase-0-roadmap.md). The result is recorded in [phase-7-realtime.md](phase-7-realtime.md).
 
 ## Goal
 
@@ -157,14 +157,14 @@ Each step is a separate commit, and both apps build after every one.
 
 ## Acceptance criteria
 
-- [ ] A zone created, changed or deleted in one tab shows in other tabs on the same plan, in the editor and on the showcase, without a reload.
-- [ ] A plan renamed or resized in one tab shows in others; a plan deleted in one shows "not found" in others.
-- [ ] Other plans' viewers receive nothing, and a rejected write sends no event.
-- [ ] A pending change stays on screen when an event arrives; an answer never brings older data back.
-- [ ] Text being typed is not replaced by another viewer's change.
-- [ ] After a lost connection, the plan is current again once it returns, without a reload.
-- [ ] `/` looks and works as after phase 6: screenshots are byte-identical with no events.
-- [ ] `backend/openapi.json` is unchanged.
+- [x] A zone created, changed or deleted in one tab shows in other tabs on the same plan, in the editor and on the showcase, without a reload.
+- [x] A plan renamed or resized in one tab shows in others; a plan deleted in one shows "not found" in others. *(The showcase shows its error state: see the deviations in [phase-7-realtime.md](phase-7-realtime.md#deviations-from-the-plan).)*
+- [x] Other plans' viewers receive nothing, and a rejected write sends no event.
+- [x] A pending change stays on screen when an event arrives; an answer never brings older data back.
+- [x] Text being typed is not replaced by another viewer's change.
+- [x] After a lost connection, the plan is current again once it returns, without a reload.
+- [x] `/` looks and works as after phase 6: screenshots are byte-identical with no events.
+- [x] `backend/openapi.json` is unchanged.
 - [ ] Both CI jobs are green.
 
 ## Out of scope
