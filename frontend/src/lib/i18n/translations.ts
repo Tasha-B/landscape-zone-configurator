@@ -61,6 +61,8 @@ export interface Translations {
     saveFailed: string;
     conflict: string;
     offline: string;
+    zoneGone: string;
+    livePaused: string;
     zonePanel: string;
     planPanel: string;
     panelHint: string;
@@ -165,6 +167,8 @@ export const translations: Record<Lang, Translations> = {
       saveFailed: "Could not save. The change was undone.",
       conflict: "This plan was changed elsewhere and has been reloaded.",
       offline: "No connection to the server. Changes are not saved until it is back.",
+      zoneGone: "This zone was deleted elsewhere.",
+      livePaused: "Live updates are paused. Reconnecting…",
       zonePanel: "Zone",
       planPanel: "Plan",
       panelHint: "Select a zone to edit it. With no zone selected, this panel edits the plan.",
@@ -274,6 +278,8 @@ export const translations: Record<Lang, Translations> = {
       saveFailed: "Не удалось сохранить. Изменение отменено.",
       conflict: "План изменили в другом месте, мы его перезагрузили.",
       offline: "Нет связи с сервером. Изменения не сохраняются, пока она не восстановится.",
+      zoneGone: "Эту зону удалили в другом месте.",
+      livePaused: "Обновления приостановлены. Переподключаемся…",
       zonePanel: "Зона",
       planPanel: "План",
       panelHint: "Выберите зону, чтобы её редактировать. Без выбранной зоны здесь редактируется план.",

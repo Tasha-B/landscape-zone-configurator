@@ -21,6 +21,8 @@ interface EditorToolbarProps {
   status: string;
   // Shown with the status while the server cannot be reached
   onRetry?: () => void;
+  // Increases when the selected zone was deleted elsewhere
+  zonesGone: number;
 }
 
 // Adding and deleting zones, and whether the changes are saved. Deleting
@@ -35,21 +37,35 @@ export default function EditorToolbar({
   onDeleteCancel,
   status,
   onRetry,
+  zonesGone,
 }: EditorToolbarProps) {
   const e = t.editor;
   // Asking moves the focus to Cancel, the safe choice, so Enter does not
-  // delete by accident
+  // delete by accident. A focus lost when the question closes, or when the
+  // selected zone was deleted elsewhere, comes to the toolbar.
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const asked = useRef(false);
   useEffect(() => {
-    if (confirmingDelete) cancelRef.current?.focus();
-  }, [confirmingDelete]);
+    if (confirmingDelete) {
+      asked.current = true;
+      cancelRef.current?.focus();
+      return;
+    }
+    if ((asked.current || zonesGone > 0) && document.activeElement === document.body) {
+      toolbarRef.current?.querySelector<HTMLButtonElement>('[tabindex="0"]')?.focus();
+    }
+    asked.current = false;
+  }, [confirmingDelete, zonesGone]);
   // One stop for Tab; the arrow keys move between the buttons
   const tool = useRovingTabIndex([true, true, true, selectedName !== null]);
 
   return (
     <div className="mb-sm flex min-h-10 flex-wrap items-center gap-xs">
       {confirmingDelete && selectedName !== null ? (
-        <div role="group" aria-label={e.deleteZone} className="flex flex-wrap items-center gap-xs">
+        // Separate keys: React would otherwise reuse the question's buttons for
+        // the toolbar's, and the focus on Cancel would end up on "+ Polygon"
+        <div key="asking" role="group" aria-label={e.deleteZone} className="flex flex-wrap items-center gap-xs">
           <p className="font-body text-sm text-ink">{fill(e.deleteConfirm, { name: selectedName })}</p>
           <button type="button" className={DANGER} onClick={onDeleteConfirm}>
             {e.deleteYes}
@@ -59,7 +75,7 @@ export default function EditorToolbar({
           </button>
         </div>
       ) : (
-        <div role="toolbar" aria-label={e.toolbarLabel} className="flex flex-wrap items-center gap-xs">
+        <div key="tools" ref={toolbarRef} role="toolbar" aria-label={e.toolbarLabel} className="flex flex-wrap items-center gap-xs">
           <button type="button" className={QUIET} {...tool(0)} onClick={() => onAdd("rect")}>
             {e.addRect}
           </button>

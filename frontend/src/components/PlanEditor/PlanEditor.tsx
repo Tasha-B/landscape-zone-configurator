@@ -23,26 +23,29 @@ export default function PlanEditor({ planId }: { planId: string }) {
   const { lang, t } = useLanguage();
   const e = t.editor;
   const { data: plan, isPending, isError, error, isFetching, refetch, saving } = useEditedPlan(planId);
-  usePlanLive(planId);
+  const live = usePlanLive(planId);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   // For the status line: whether anything was changed yet, and how the last
-  // failed save failed (cleared by the next change)
+  // save failed or that the selected zone was deleted elsewhere (cleared by
+  // the next change)
   const [changed, setChanged] = useState(false);
-  const [lastError, setLastError] = useState<SaveErrorKind | null>(null);
+  const [notice, setNotice] = useState<SaveErrorKind | "zoneGone" | null>(null);
+  // How many selected zones were deleted elsewhere
+  const [zonesGone, setZonesGone] = useState(0);
   const [saveErrors, setSaveErrors] = useState(0);
   const edits = usePlanEdits(planId, {
     onSaveError: (kind) => {
-      setLastError(kind);
+      setNotice(kind);
       setSaveErrors((count) => count + 1);
     },
   });
 
   // Without a plan yet: loading, or why it could not be loaded. Once there is
   // one, a failed reload (the server went away) keeps it on screen and only
-  // the status line says so.
-  if (!plan) {
-    const missing = error instanceof ApiError && (error.status === 404 || error.status === 400);
+  // the status line says so, unless the answer is that the plan is gone.
+  const missing = error instanceof ApiError && (error.status === 404 || error.status === 400);
+  if (!plan || missing) {
     return (
       <PageMain title={e.title}>
         {isPending ? (
@@ -69,9 +72,20 @@ export default function PlanEditor({ planId }: { planId: string }) {
 
   const selected = plan.zones.find((zone) => zone.id === selectedId) ?? null;
 
+  // A selected zone that is gone was deleted elsewhere: this editor's own
+  // delete clears the selection, and a new zone is in the cache before it is
+  // selected. Adjusted during render, as React recommends for state that
+  // follows props.
+  if (!selected && selectedId !== null) {
+    setSelectedId(null);
+    setConfirmingDelete(false);
+    setNotice("zoneGone");
+    setZonesGone((count) => count + 1);
+  }
+
   function startChange() {
     setChanged(true);
-    setLastError(null);
+    setNotice(null);
   }
   const changeZone = (zoneId: string, changes: ZoneChanges) => {
     startChange();
@@ -104,17 +118,22 @@ export default function PlanEditor({ planId }: { planId: string }) {
   };
 
   const offline = isError;
+  // What holds now comes before what happened last
   const status = saving
     ? e.saving
     : offline
       ? e.offline
-      : lastError === "conflict"
-      ? e.conflict
-      : lastError === "failed"
-        ? e.saveFailed
-        : changed
-          ? e.saved
-          : "";
+      : live === "lost"
+        ? e.livePaused
+        : notice === "conflict"
+          ? e.conflict
+          : notice === "failed"
+            ? e.saveFailed
+            : notice === "zoneGone"
+              ? e.zoneGone
+              : changed
+                ? e.saved
+                : "";
 
   return (
     <PageMain title={plan.name}>
@@ -138,6 +157,7 @@ export default function PlanEditor({ planId }: { planId: string }) {
             onDeleteCancel={() => setConfirmingDelete(false)}
             status={status}
             onRetry={offline && !isFetching ? () => void refetch() : undefined}
+            zonesGone={zonesGone}
           />
           <div className={`${PAPER_SHEET_CLASS} p-sm`}>
             <EditorCanvas

@@ -3,7 +3,7 @@ import { FIELD_CLASS, LABEL_CLASS } from "./fieldStyles";
 
 interface FieldProps {
   label: string;
-  // The saved value; the field follows it while it is not being edited
+  // The saved value; the field follows it until the person has typed something
   value: string;
   // Called with the trimmed text when the field is left or Enter is pressed,
   // only if it changed and passes the checks
@@ -32,13 +32,17 @@ export default function Field({
   const id = useId();
   const [draft, setDraft] = useState(value);
   const [error, setError] = useState<string | null>(null);
-  // A new saved value (another change, a reload) replaces the text, adjusted
-  // during render as React recommends for state that follows props
+  // A new saved value (another viewer's change, a reload) replaces the text,
+  // unless the person has typed something: that stays, and leaving the field
+  // saves it. Adjusted during render, as React recommends for state that
+  // follows props.
   const [seen, setSeen] = useState(value);
   if (value !== seen) {
     setSeen(value);
-    setDraft(value);
-    setError(null);
+    if (draft === seen) {
+      setDraft(value);
+      setError(null);
+    }
   }
 
   function commit() {
