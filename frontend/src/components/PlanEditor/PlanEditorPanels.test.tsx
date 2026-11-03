@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DRAFT_CONTENT } from "../../lib/editor/newZone";
 import { fakeEditorApi, PLAN, renderEditor } from "./fakeEditorApi";
 
+vi.mock("socket.io-client", () => import("../../lib/api/fakeSocket"));
+
 describe("the editor's toolbar and panels", () => {
   let api: ReturnType<typeof fakeEditorApi>;
 

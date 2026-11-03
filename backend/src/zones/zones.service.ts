@@ -1,7 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { Lang, Prisma } from "../generated/prisma/client.js";
 import { PrismaService } from "../prisma/prisma.service.js";
-import { versionedUpdate } from "../prisma/versioned-update.js";
+import { isRecordNotFound, versionedUpdate } from "../prisma/versioned-update.js";
+import { PlanEventsGateway } from "../realtime/plan-events.gateway.js";
 import { ZONE_TYPES_BY_NAME } from "./zone-type.js";
 import type { CreateZoneDto, UpdateZoneDto } from "./zone.dto.js";
 import { toZoneResponse } from "./zone.mapper.js";
@@ -16,7 +17,10 @@ const labelJson = (label: ZoneLabel | null) => (label === null ? Prisma.DbNull :
 
 @Injectable()
 export class ZonesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: PlanEventsGateway,
+  ) {}
 
   // The zone goes last in the legend; its zIndex, unless sent, puts it above
   // the plan's other zones. Null when there is no such plan.
@@ -28,8 +32,9 @@ export class ZonesService {
     });
     if (_count === 0 && !(await this.planExists(planId))) return null;
 
+    let zone;
     try {
-      const zone = await this.prisma.zone.create({
+      zone = await this.prisma.zone.create({
         data: {
           planId,
           type: ZONE_TYPES_BY_NAME[dto.type],
@@ -43,12 +48,14 @@ export class ZonesService {
         },
         include: { content: true },
       });
-      return toZoneResponse(zone);
     } catch (error) {
       // The plan was deleted between the two queries (foreign key violation)
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") return null;
       throw error;
     }
+    const response = toZoneResponse(zone);
+    this.events.zoneCreated(planId, response);
+    return response;
   }
 
   // 409 when the zone has a newer version than the one sent, 404 when it is
@@ -81,14 +88,23 @@ export class ZonesService {
         }),
       async () => (await this.prisma.zone.count({ where: { id } })) > 0,
     );
-    return toZoneResponse(zone);
+    const response = toZoneResponse(zone);
+    this.events.zoneUpdated(zone.planId, response);
+    return response;
   }
 
   // The other zones keep their legend order; gaps in position do not matter.
   // False when there was no such zone.
   async remove(id: string): Promise<boolean> {
-    const { count } = await this.prisma.zone.deleteMany({ where: { id } });
-    return count > 0;
+    let planId: string;
+    try {
+      ({ planId } = await this.prisma.zone.delete({ where: { id }, select: { planId: true } }));
+    } catch (error) {
+      if (isRecordNotFound(error)) return false;
+      throw error;
+    }
+    this.events.zoneDeleted(planId, id);
+    return true;
   }
 
   private async planExists(id: string): Promise<boolean> {

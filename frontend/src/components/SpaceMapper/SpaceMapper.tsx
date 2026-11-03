@@ -7,6 +7,7 @@ import PlanStatus from "./PlanStatus";
 import SpaceMapperPanel from "./SpaceMapperPanel";
 import SpaceMapperSheet from "./SpaceMapperSheet";
 import { PLAN_ID } from "../../config";
+import { usePlanLive } from "../../lib/api/live";
 import { usePlan } from "../../lib/api/plans";
 import { useLanguage } from "../../lib/i18n/LanguageProvider";
 import type { Translations } from "../../lib/i18n/translations";
@@ -23,6 +24,7 @@ import Button from "../Button/Button";
 export default function SpaceMapper() {
   const { t } = useLanguage();
   const { data: plan, isError, isFetching, refetch } = usePlan(PLAN_ID);
+  usePlanLive(PLAN_ID);
 
   if (plan) return <SpaceMapperLoaded plan={plan} />;
 

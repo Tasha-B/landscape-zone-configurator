@@ -119,12 +119,12 @@ GET    /api/health                healthcheck
 GET    /api/docs                  Swagger UI (the document at /api/docs-json)
 ```
 
-Built so far: every endpoint above. The read path, Swagger and health came in phase 4 ([phase-4-read-api.md](phase-4-read-api.md)), the writes in phase 5 ([phase-5-crud.md](phase-5-crud.md)); the WebSocket namespace below comes in phase 7. The OpenAPI document is committed as `backend/openapi.json`, and the frontend's types are generated from it ([phase-4-read-api.md](phase-4-read-api.md#contract-openapi--frontend-types)).
+Built so far: every endpoint above. The read path, Swagger and health came in phase 4 ([phase-4-read-api.md](phase-4-read-api.md)), the writes in phase 5 ([phase-5-crud.md](phase-5-crud.md)), and the WebSocket namespace below in phase 7 ([phase-7-realtime.md](phase-7-realtime.md)). The OpenAPI document is committed as `backend/openapi.json`, and the frontend's types are generated from it ([phase-4-read-api.md](phase-4-read-api.md#contract-openapi--frontend-types)).
 
-WebSocket namespace `/plans`:
+WebSocket namespace `/plans`, at the path `/api/socket.io`:
 
-- the client emits `join { planId }` and is placed in the room `plan:<id>`;
-- the server emits `zone.created`, `zone.updated` and `zone.deleted` to that room.
+- the client emits `join { planId }` and is placed in the room `plan:<id>`; a socket watches one plan;
+- the server emits `zone.created`, `zone.updated`, `zone.deleted`, `plan.updated` and `plan.deleted` to that room.
 
 REST stays the source of truth. The gateway only broadcasts changes that have already been saved, so a client that misses an event recovers by refetching.
 
@@ -145,7 +145,7 @@ REST stays the source of truth. The gateway only broadcasts changes that have al
 
 Phases 8 and 9 can move up to right after phase 3. Every PR after that then goes through CI, which shows the DevOps side of the project from early on.
 
-Done so far: phases 1–6. The editor of phase 6 is described in [phase-6-editor.md](phase-6-editor.md).
+Done so far: phases 1–7. Live updates between viewers are described in [phase-7-realtime.md](phase-7-realtime.md).
 
 ## Later
 
@@ -163,6 +163,7 @@ Editor features asked for while trying phase 6, kept out of it so that it could 
 Questions that are not decided yet but block a later phase. Each one is settled in the plan of the phase named in it, and moves into that plan's decisions.
 
 1. **The demo plan on a deployed API** (phase 9). Without auth, anyone who reaches a public API can change or delete the demo office, and the page then shows its error state. The options include making the demo plan read-only, reseeding it on a schedule or on start, or deploying the API only behind auth. Raised 2026-11-01 in the [phase 5 plan](phase-5-crud-plan.md#decisions-taken-before-the-plan), where the demo plan stays unprotected for local development.
+2. **Separating users before a public deployment** (phase 9). There are no users today: every plan is open to everyone who reaches the API, to change or delete, and from phase 7 to follow live over the socket by its id. Auth and plan owners are phase 10, which is optional and comes after the deployment. The options include making phase 10 required and moving it before the deployment, or deploying without auth only what is safe to show, such as a read-only demo plan. Raised 2026-11-02 while planning [phase 7](phase-7-realtime-plan.md#out-of-scope), which does not change who can reach what.
 
 Decided:
 

@@ -1,9 +1,10 @@
 // Test support for the editor's component tests: the API in memory, checking
 // versions like the real one, and the editor rendered on its route
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render } from "@testing-library/react";
+import { act, render } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { vi } from "vitest";
+import { sockets } from "../../lib/api/fakeSocket";
 import type { PlanResponse, ZoneResponse } from "../../lib/api/types";
 import { LanguageProvider } from "../../lib/i18n/LanguageProvider";
 import PlanEditorPage from "../../pages/PlanEditorPage";
@@ -26,7 +27,9 @@ export interface Write {
 }
 
 // `failNext` answers the next write with that status; `down` answers every
-// request with 502, as Vite's proxy does when the API is not running
+// request with 502, as Vite's proxy does when the API is not running; `gone`
+// answers a GET of the plan with 404; `hold()` keeps the answer to a zone's
+// PATCH back, after it is saved, until `release()`
 export function fakeEditorApi() {
   const api = {
     plan: {
@@ -45,6 +48,12 @@ export function fakeEditorApi() {
     writes: [] as Write[],
     failNext: null as number | null,
     down: false,
+    gone: false,
+    answers: Promise.resolve(),
+    release: () => {},
+    hold() {
+      api.answers = new Promise((resolve) => (api.release = resolve));
+    },
     gets: 0,
     // The bodies of zone PATCHes, in order
     get patches() {
@@ -58,7 +67,7 @@ export function fakeEditorApi() {
     if (api.down) return new Response("Bad Gateway", { status: 502 });
     if (method === "GET") {
       api.gets++;
-      return url === `/api/plans/${PLAN}`
+      return url === `/api/plans/${PLAN}` && !api.gone
         ? Response.json(api.plan)
         : Response.json({ statusCode: 404, message: "Plan not found" }, { status: 404 });
     }
@@ -81,6 +90,7 @@ export function fakeEditorApi() {
         version: current.version + 1,
       } as ZoneResponse;
       api.plan = { ...api.plan, zones: api.plan.zones.map((item) => (item.id === zoneId ? next : item)) };
+      await api.answers;
       return Response.json(next);
     }
     if (method === "DELETE" && zoneId) {
@@ -109,6 +119,13 @@ export function fakeEditorApi() {
   });
   return api;
 }
+
+// What the editor's socket receives, with time for React to hear about it
+export const receive = (name: string, ...args: unknown[]) =>
+  act(async () => {
+    sockets.at(-1)!.receive(name, ...args);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
 
 export function renderEditor(id = PLAN) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });

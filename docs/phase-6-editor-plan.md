@@ -173,7 +173,7 @@ Each step is a separate commit, and both apps build after every one.
 - [x] Zones can be added (rect, circle, polygon) and deleted; a zone's type, color and texts in both languages, and the plan's name, size, scale and background, can be edited. *(Texts of the page's language only: see the deviations.)*
 - [x] A failed save is rolled back with a message; a change made meanwhile in another tab leads to `409`, a reload and a message.
 - [x] `/` looks and works as after phase 5: screenshots are byte-identical with the header hidden, except shots taken mid-animation or mid-hover.
-- [ ] Both CI jobs are green.
+- [x] Both CI jobs are green.
 
 ## Out of scope
 

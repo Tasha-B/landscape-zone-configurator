@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { withEdits, withoutZone, withZone } from "./edits";
+import { withEdits, withoutZone, withPlanFields, withUpdatedZone, withZone } from "./edits";
 import type { PlanResponse, ZoneResponse } from "./types";
 
 const en = { name: "Reception", tagline: "t", recommendation: "r", rationale: "w" };
@@ -74,14 +74,73 @@ describe("withEdits", () => {
   });
 });
 
-describe("the server's answers", () => {
-  it("replace a known zone in place and add a new one last", () => {
-    const changed = zone("a", { color: "#000000", version: 2 });
-    expect(withZone(plan, changed).zones).toEqual([changed, plan.zones[1]]);
-    expect(withZone(plan, zone("c")).zones.map((item) => item.id)).toEqual(["a", "b", "c"]);
+describe("what the server says", () => {
+  const { zones: _zones, ...fields } = plan;
+
+  describe("withZone: a created zone", () => {
+    it("goes last", () => {
+      expect(withZone(plan, zone("c")).zones.map((item) => item.id)).toEqual(["a", "b", "c"]);
+    });
+
+    it("is not added twice when both its event and its answer arrive", () => {
+      const created = zone("c");
+      expect(withZone(withZone(plan, created), created).zones.map((item) => item.id)).toEqual(["a", "b", "c"]);
+    });
+
+    it("does not undo a change that overtook it", () => {
+      const changed = zone("c", { color: "#000000", version: 2 });
+      expect(withZone(withZone(plan, changed), zone("c")).zones[2]).toEqual(changed);
+    });
   });
 
-  it("remove a deleted zone", () => {
-    expect(withoutZone(plan, "a").zones.map((item) => item.id)).toEqual(["b"]);
+  describe("withUpdatedZone: a changed zone", () => {
+    it("replaces a known zone in place at a newer version", () => {
+      const changed = zone("a", { color: "#000000", version: 2 });
+      expect(withUpdatedZone(plan, changed).zones).toEqual([changed, plan.zones[1]]);
+    });
+
+    it("replaces it at the same version", () => {
+      const same = zone("a", { color: "#000000" });
+      expect(withUpdatedZone(plan, same).zones[0]).toEqual(same);
+    });
+
+    it("is ignored at an older version", () => {
+      const newer = withUpdatedZone(plan, zone("a", { color: "#222222", version: 3 }));
+      const older = zone("a", { color: "#111111", version: 2 });
+      expect(withUpdatedZone(newer, older)).toEqual(newer);
+    });
+
+    it("does not bring a deleted zone back", () => {
+      expect(withUpdatedZone(withoutZone(plan, "a"), zone("a", { version: 2 })).zones.map((item) => item.id)).toEqual(["b"]);
+    });
+  });
+
+  describe("withoutZone: a deleted zone", () => {
+    it("goes, and leaves the others", () => {
+      expect(withoutZone(plan, "a").zones.map((item) => item.id)).toEqual(["b"]);
+    });
+
+    it("changes nothing when already gone", () => {
+      expect(withoutZone(withoutZone(plan, "a"), "a").zones.map((item) => item.id)).toEqual(["b"]);
+    });
+  });
+
+  describe("withPlanFields: the plan's fields", () => {
+    it("are taken at a newer version, and the zones stay", () => {
+      expect(withPlanFields(plan, { ...fields, name: "Renamed", version: 5 })).toEqual({ ...plan, name: "Renamed", version: 5 });
+    });
+
+    it("are taken at the same version", () => {
+      expect(withPlanFields(plan, { ...fields, name: "Renamed" }).name).toBe("Renamed");
+    });
+
+    it("are ignored at an older version", () => {
+      expect(withPlanFields(plan, { ...fields, name: "Old", version: 3 })).toBe(plan);
+    });
+
+    it("do not bring older zones with a PATCH answer", () => {
+      const answer = { ...plan, name: "Renamed", version: 5, zones: [zone("a")] };
+      expect(withPlanFields(plan, answer)).toEqual({ ...plan, name: "Renamed", version: 5 });
+    });
   });
 });

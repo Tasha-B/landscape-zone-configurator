@@ -6,6 +6,8 @@ type Schemas = components["schemas"];
 
 export type PlanResponse = Schemas["PlanResponse"];
 export type ZoneResponse = Schemas["ZoneResponse"];
+// A plan's own fields: its answer without the zones
+export type PlanFields = Omit<PlanResponse, "zones">;
 export type PlanSummary = Schemas["PlanSummaryResponse"];
 export type CreatePlanBody = Schemas["CreatePlanDto"];
 export type UpdatePlanBody = Schemas["UpdatePlanDto"];

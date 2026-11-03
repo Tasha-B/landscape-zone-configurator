@@ -183,6 +183,11 @@ export default function EditorCanvas({
     if (!drag) return;
     svgRef.current?.releasePointerCapture?.(event.pointerId);
     setDrag(null);
+    // Deleted elsewhere during the drag: there is nothing left to save
+    if (!plan.zones.some((zone) => zone.id === drag.zoneId)) {
+      setDraft(null);
+      return;
+    }
     const shape = shapeAt(event, drag);
     // A midpoint clicked without a move still adds its vertex
     if (cancelled || sameShape(shape, drag.before)) {

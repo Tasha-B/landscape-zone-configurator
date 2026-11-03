@@ -5,6 +5,8 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeEditorApi, renderEditor } from "./fakeEditorApi";
 
+vi.mock("socket.io-client", () => import("../../lib/api/fakeSocket"));
+
 describe("the plan editor", () => {
   let api: ReturnType<typeof fakeEditorApi>;
 
