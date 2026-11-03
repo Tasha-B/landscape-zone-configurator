@@ -39,6 +39,7 @@ docs/       project documentation
 - [Phase 6 — Editor](docs/phase-6-editor.md): the pages, editing on the canvas and in the panels, pending changes over the confirmed plan, checks, findings
 - [Phase 7 — Realtime: plan](docs/phase-7-realtime-plan.md): Socket.IO rooms per plan, events after each saved change, the cache moving only forward, the editor under other viewers' changes
 - [Phase 7 — Realtime](docs/phase-7-realtime.md): the protocol, the cache moving only forward, `usePlanLive`, the editor under other viewers' changes, checks, findings
+- [Phase 8 — Docker: plan](docs/phase-8-docker-plan.md): images for the API and the frontend behind nginx, the full stack in Compose, migrations on start
 
 ## Run locally
 
