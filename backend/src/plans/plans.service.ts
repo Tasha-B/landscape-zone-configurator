@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import type { Prisma } from "../generated/prisma/client.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 import { versionedUpdate } from "../prisma/versioned-update.js";
+import { PlanEventsGateway } from "../realtime/plan-events.gateway.js";
 import type { CreatePlanDto, UpdatePlanDto } from "./plan.dto.js";
 import type { PlanSummaryResponse } from "./plan-summary.response.js";
 import { toPlanResponse } from "./plan.mapper.js";
@@ -15,7 +16,10 @@ const WITH_ZONES = {
 
 @Injectable()
 export class PlansService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: PlanEventsGateway,
+  ) {}
 
   // Oldest first, so the demo office leads the list
   async list(): Promise<PlanSummaryResponse[]> {
@@ -53,13 +57,17 @@ export class PlansService {
         }),
       async () => (await this.prisma.floorPlan.count({ where: { id } })) > 0,
     );
-    return toPlanResponse(plan);
+    const response = toPlanResponse(plan);
+    this.events.planUpdated(response);
+    return response;
   }
 
   // Zones and their content go with the plan (onDelete: Cascade). False when
   // there was no such plan.
   async remove(id: string): Promise<boolean> {
     const { count } = await this.prisma.floorPlan.deleteMany({ where: { id } });
-    return count > 0;
+    if (count === 0) return false;
+    this.events.planDeleted(id);
+    return true;
   }
 }
