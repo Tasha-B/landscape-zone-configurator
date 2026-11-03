@@ -19,15 +19,15 @@ This is a local full stack and the base for phase 9's images. It is not a deploy
 - **One lockfile in the root** covers both workspaces, so each image is built from the repo's root.
 - `node_modules` on the host is Windows-only and must not reach an image. `backend/.env` must not either.
 
-## Decisions to confirm
+## Decisions taken before the plan
 
-*(Proposed 2026-11-03.)*
+*(Decided 2026-11-03.)*
 
 1. **Migrations run in a one-shot `migrate` service,** not in the API's start command. The API waits for it to finish. The API's image then has no CLI and no dev dependencies, and a failed migration shows up as that service's failure, not as a crashing API.
-2. **The demo office is seeded by an explicit command, `npm run stack:seed`,** not on start. The seed replaces the demo plan, so running it on every start would undo edits. Until it is run, the showcase shows its existing error state. Whether a deployment seeds by itself belongs to [open question 1](phase-0-roadmap.md#open-questions).
+2. **The demo office is seeded on start only if it is missing.** A fresh stack shows it at once, and edits survive restarts, which a full seed on every start would undo, also for development through the shared volume (decision 3). A demo office deleted on purpose comes back at the next start. `npm run stack:seed` resets it by hand. Whether a deployment resets it by itself belongs to [open question 1](phase-0-roadmap.md#open-questions).
 3. **One Compose file, one data volume.** `api`, `migrate` and `web` join `docker-compose.yml`, and the stack and development share the database. `db:up` keeps starting only Postgres. The alternative, a separate file and volume, keeps the two apart but means two sets of data and longer commands.
 4. **Only nginx is published,** at `127.0.0.1:8080`, and it forwards `/api`. The page, REST, the socket and Swagger UI share one origin, so there is still no CORS. Postgres's published port also moves to `127.0.0.1`, since its password is a development one.
-5. **Debian-based Node images (`node:24-slim`) and unprivileged nginx (`nginxinc/nginx-unprivileged`, Alpine).** The lockfile has musl builds of the native packages, so Alpine Node would likely work, but Prisma's schema engine and the native tools are simplest on glibc. Both containers run as non-root.
+5. **Debian-based Node images (`node:24.22-slim`) and unprivileged nginx (`nginxinc/nginx-unprivileged`, Alpine).** The lockfile has musl builds of the native packages, so Alpine Node would likely work, but Prisma's schema engine and the native tools are simplest on glibc. Both containers run as non-root.
 6. **No code-splitting in this phase.** nginx compresses the 517 kB bundle to about 163 kB. Splitting the editor off would make the showcase load differently, so it needs its own change and its own screenshots. Vite's warning stays.
 
 ## Images
@@ -52,23 +52,24 @@ The build context of both is the repo's root. A `.dockerignore` there lets in on
 
 | Stage | From | Holds |
 | --- | --- | --- |
-| `build` | `node:24-slim` | every dependency of the workspace (`npm ci -w backend`), which also runs `prisma generate`; `nest build` |
+| `build` | `node:24.22-slim` and `openssl` | every dependency of the workspace (`npm ci -w backend`), which also runs `prisma generate`; `nest build` |
 | `tools` | `build` | used by `migrate`: the CLI, `tsx`, the schema, the migrations and the seed |
-| `runtime` (last) | `node:24-slim` | `dist` and production dependencies (`npm ci -w backend --omit=dev --ignore-scripts`) |
+| `runtime` (last) | `node:24.22-slim` | `dist` and production dependencies (`npm ci -w backend --omit=dev --ignore-scripts --legacy-peer-deps`) |
 
 - **`--ignore-scripts` in `runtime`,** because `postinstall` would call the CLI that `--omit=dev` removed. The generated client is already in `dist`.
+- **`--legacy-peer-deps` in `runtime`.** Optional peers of `@prisma/client`, `@nestjs/swagger` and `vite` mark `prisma`, `typescript`, `tsx` and `vite` as more than dev dependencies, so `--omit=dev` alone keeps them, and `--omit=peer` does not help. Ignoring peers takes `node_modules` from 501 to 166 MB, with versions still from the lockfile. The peers the API needs are its own dependencies.
 - **`CMD ["node", "dist/main.js"]`,** not `npm start`, so that `SIGTERM` reaches Node, as the shutdown hooks expect.
 - **`USER node`,** with `NODE_ENV=production`.
-- **Prisma's schema engine** is downloaded when the `tools` stage installs, and may need `openssl` in the slim image. Step 2 checks this.
+- **`openssl` in `build`.** Without it the CLI warns that it cannot tell which schema engine to use. The API itself needs no engine: it talks to Postgres through `@prisma/adapter-pg`.
 
 ### `frontend/Dockerfile`
 
 | Stage | From | Holds |
 | --- | --- | --- |
-| `build` | `node:24-slim` | `npm ci -w frontend`, `npm run build -w frontend`, with `VITE_PLAN_ID` as an optional build argument |
+| `build` | `node:24.22-slim` | `npm ci -w frontend`, `npm run build -w frontend`, with `VITE_PLAN_ID` as an optional build argument |
 | `runtime` (last) | `nginxinc/nginx-unprivileged` (Alpine) | `dist` and `nginx.conf`, listening on 8080 |
 
-Exact image versions are pinned when step 2 and step 3 check what is current. `.nvmrc` stays Node's source of truth for CI, and the Dockerfiles name the same major version.
+Image versions are pinned to a minor release. `.nvmrc` stays Node's source of truth for CI, and the Dockerfiles name the same major version.
 
 ### `frontend/nginx.conf`
 
@@ -83,13 +84,14 @@ Exact image versions are pinned when step 2 and step 3 check what is current. `.
 
 ```
 db       postgres:18-alpine   as now; port on 127.0.0.1
-migrate  backend, tools       prisma migrate deploy, once     after: db healthy
+migrate  backend, tools       migrations, then a missing demo office, once   after: db healthy
 api      backend, runtime     not published                   after: migrate completed
 web      frontend, runtime    127.0.0.1:${WEB_PORT:-8080}     after: api healthy
 ```
 
 - **Healthchecks.** `api` calls `/api/health` with Node's `fetch`, since the slim image has no `curl`. `web` calls its own `/` with `wget`, on `127.0.0.1`, because `localhost` can resolve to IPv6 first.
 - **`restart: unless-stopped`** on `db`, `api` and `web`, not on `migrate`.
+- **The seed's new mode.** `prisma db seed -- --if-missing` loads the demo office only if its plan does not exist. Without the flag the seed replaces it, as today, so `db:seed` does not change. A failing migration or seed stops `api` from starting.
 - **The API's `DATABASE_URL`** names the `db` service. The development credentials stay in the file, as today; phase 9 supplies real ones.
 
 New root scripts:
@@ -97,7 +99,7 @@ New root scripts:
 | Script | Does |
 | --- | --- |
 | `stack:up` | builds and starts everything, and waits until it is healthy |
-| `stack:seed` | loads the demo office, in a one-off `migrate` container |
+| `stack:seed` | resets the demo office to its original state, in a one-off `migrate` container |
 | `stack:logs` | follows the logs |
 | `stack:down` | stops everything; the data is kept |
 
@@ -116,14 +118,14 @@ frontend/
 └── nginx.conf
 ```
 
-No application code changes.
+The application's code does not change; only the seed gets its new mode.
 
 ## Checks
 
 There is nothing here for unit tests to cover, so the checks run against the real stack:
 
-- **A fresh start.** With an empty volume (a temporary Compose project, so that the development data stays untouched): `stack:up` succeeds, the migrations are applied, the showcase shows its error state, and `stack:seed` brings the demo office.
-- **Restarts:** data survives `stack:down` and `stack:up`, and `migrate` does nothing the second time.
+- **A fresh start.** With an empty volume (a temporary Compose project, so that the development data stays untouched): `stack:up` succeeds, the migrations are applied, and the showcase shows the demo office.
+- **Restarts:** data survives `stack:down` and `stack:up`, and `migrate` does nothing the second time: an edited demo office stays edited. A deleted one comes back, and `stack:seed` undoes edits.
 - **Failures:**
   - a broken `DATABASE_URL` stops `api` with the validation message, and `web` does not start;
   - a failing migration stops `api` from starting;
@@ -149,13 +151,13 @@ Each step is a separate commit, and both apps build after every one.
 1. **Plan.** This document. Tick the last acceptance box of phase 7 (both CI jobs were green on PR #9).
 2. **The API's image.** `.dockerignore`, `backend/Dockerfile`, checked with `docker build` and `docker run` against the running `db`.
 3. **The frontend's image.** `frontend/Dockerfile`, `nginx.conf`, checked against a running API container.
-4. **The stack.** `migrate`, `api` and `web` in Compose, healthchecks, the port on `127.0.0.1`, the root scripts. The full checks above.
+4. **The stack.** The seed's new mode with a test, `migrate`, `api` and `web` in Compose, healthchecks, the port on `127.0.0.1`, the root scripts. The full checks above.
 5. **Docs.** `phase-8-docker.md`, the roadmap, the README (running the stack).
 
 ## Acceptance criteria
 
 - [ ] `npm run stack:up` on an empty volume builds and starts everything, and reports success once it is healthy.
-- [ ] Migrations are applied on start, and `stack:seed` loads the demo office.
+- [ ] Migrations are applied on start, and a missing demo office is loaded. Edits to it survive a restart, and `stack:seed` resets it.
 - [ ] The app works through `http://localhost:8080`: the showcase, the plans page, the editor, a reload on any page, and Swagger UI.
 - [ ] Live updates work through nginx, and survive a recreated API container.
 - [ ] `/` looks as under Vite: the screenshots are byte-identical.
