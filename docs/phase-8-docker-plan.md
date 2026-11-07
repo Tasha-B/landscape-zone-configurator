@@ -28,7 +28,7 @@ This is a local full stack and the base for phase 9's images. It is not a deploy
 3. **One Compose file, one data volume.** `api`, `migrate` and `web` join `docker-compose.yml`, and the stack and development share the database. `db:up` keeps starting only Postgres. The alternative, a separate file and volume, keeps the two apart but means two sets of data and longer commands.
 4. **Only nginx is published,** at `127.0.0.1:8080`, and it forwards `/api`. The page, REST, the socket and Swagger UI share one origin, so there is still no CORS. Postgres's published port also moves to `127.0.0.1`, since its password is a development one.
 5. **Debian-based Node images (`node:24.22-slim`) and unprivileged nginx (`nginxinc/nginx-unprivileged`, Alpine).** The lockfile has musl builds of the native packages, so Alpine Node would likely work, but Prisma's schema engine and the native tools are simplest on glibc. Both containers run as non-root.
-6. **No code-splitting in this phase.** nginx compresses the 517 kB bundle to about 163 kB. Splitting the editor off would make the showcase load differently, so it needs its own change and its own screenshots. Vite's warning stays.
+6. **No code-splitting in this phase.** nginx compresses the 517 kB bundle to 162 kB. Splitting the editor off would make the showcase load differently, so it needs its own change and its own screenshots. Vite's warning stays.
 
 ## Images
 
@@ -66,8 +66,10 @@ The build context of both is the repo's root. A `.dockerignore` there lets in on
 
 | Stage | From | Holds |
 | --- | --- | --- |
-| `build` | `node:24.22-slim` | `npm ci -w frontend`, `npm run build -w frontend`, with `VITE_PLAN_ID` as an optional build argument |
-| `runtime` (last) | `nginxinc/nginx-unprivileged` (Alpine) | `dist` and `nginx.conf`, listening on 8080 |
+| `build` | `node:24.22-slim` | `npm ci -w frontend`, then `vite build`, with `VITE_PLAN_ID` as an optional build argument |
+| `runtime` (last) | `nginxinc/nginx-unprivileged:1.30-alpine` | `dist` and `nginx.conf`, listening on 8080 |
+
+- **`vite build`, not the workspace's `build` script,** which runs `tsc -b` first. That also checks the tests, and one of them reads the demo plan from `backend/prisma`, which is not in this image. Types and tests stay CI's job; the image only needs the bundle.
 
 Image versions are pinned to a minor release. `.nvmrc` stays Node's source of truth for CI, and the Dockerfiles name the same major version.
 
@@ -76,8 +78,9 @@ Image versions are pinned to a minor release. `.nvmrc` stays Node's source of tr
 - **`/api/`** goes to the API, with the WebSocket upgrade headers and `proxy_http_version 1.1`. Socket.IO pings every 25 s, inside nginx's 60 s read timeout, so that timeout stays.
 - **Docker's DNS on each request** (`resolver 127.0.0.11` and a variable in `proxy_pass`). Without it, nginx keeps the API's address from its own start, and a recreated API container that gets a new address stays unreachable until nginx restarts.
 - **The other paths** are the app: `try_files $uri /index.html`, so `/plans/:id/edit` survives a reload. A missing file under `/assets/` is a `404`, not the page.
-- **Caching:** `/assets/` has hashed names and is cached for a year, as `immutable`. `index.html` is `no-cache`, so a new build reaches people at once.
-- **`gzip`** for JavaScript, CSS, SVG and JSON.
+- **Caching:** `/assets/` has hashed names and is cached for a year, as `immutable`; a `404` there is not cached. `index.html` is `no-cache`, so a new build reaches people at once.
+- **`gzip`** at level 6 for JavaScript, CSS, SVG and JSON. nginx's default, level 1, left the bundle at 191 kB instead of 162 kB.
+- **`absolute_redirect off`,** so that the redirect from `/api` to `/api/` keeps the port the browser used, not nginx's own 8080.
 - **`X-Content-Type-Options: nosniff`.** Other security headers, such as a CSP, wait for a real deployment in phase 9.
 
 ## Compose
