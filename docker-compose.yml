@@ -1,30 +1,95 @@
-# Local development services. For now only PostgreSQL: the API and the
-# frontend run on the host with `npm run dev:*`; their containers come in
-# phase 8.
+# The app in containers: Postgres, the migrations, the API, and nginx serving
+# the frontend and forwarding /api. Development uses only `db`, and runs the
+# API and the frontend on the host with `npm run dev:*`; both share its data.
 #
-#   npm run db:up     start Postgres and wait until it is healthy
-#   npm run db:down   stop it (the data volume is kept)
+#   npm run db:up       start Postgres alone and wait until it is healthy
+#   npm run stack:up    build and start everything: http://localhost:8080
+#   npm run stack:seed  reset the demo office to its original state
+#   npm run stack:logs  follow the logs
+#   npm run db:down     stop whatever runs (stack:down does the same); the
+#                       data volume is kept
 
 name: landscape-zone-configurator
+
+# The development credentials, not secrets; phase 9 supplies real ones.
+# backend/.env.example holds the matching DATABASE_URL for the host.
+x-database-url: &database-url postgresql://lzc:lzc@db:5432/lzc
 
 services:
   db:
     image: postgres:18-alpine
     environment:
-      # Local development only, not secrets. backend/.env.example holds the
-      # matching DATABASE_URL.
       POSTGRES_USER: lzc
       POSTGRES_PASSWORD: lzc
       POSTGRES_DB: lzc
     ports:
-      # Set DB_PORT if 5432 is taken on the host, and change DATABASE_URL to match
-      - "${DB_PORT:-5432}:5432"
+      # For the host only. Set DB_PORT if 5432 is taken, and change
+      # DATABASE_URL in backend/.env to match.
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
     volumes:
       # Postgres 18 images keep data in a versioned subdirectory
       # (/var/lib/postgresql/18/docker), so the volume mounts the parent
       - pgdata:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U lzc -d lzc"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # Runs once on every start: the migrations, then the demo office if it is
+  # missing. An edited demo office is left as it is.
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: tools
+    environment:
+      DATABASE_URL: *database-url
+    command: ["sh", "-c", "prisma migrate deploy && prisma db seed -- --if-missing"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: *database-url
+    # Reached through web only
+    expose:
+      - "3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      # The slim image has no curl; /api/health also checks the database
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        # The showcase's plan; empty means the demo office
+        VITE_PLAN_ID: ${VITE_PLAN_ID:-}
+    ports:
+      # Set WEB_PORT if 8080 is taken
+      - "127.0.0.1:${WEB_PORT:-8080}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      # 127.0.0.1, since localhost may resolve to IPv6 first
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
       interval: 5s
       timeout: 3s
       retries: 10

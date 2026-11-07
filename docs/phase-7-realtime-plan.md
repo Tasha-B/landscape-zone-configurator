@@ -165,7 +165,7 @@ Each step is a separate commit, and both apps build after every one.
 - [x] After a lost connection, the plan is current again once it returns, without a reload.
 - [x] `/` looks and works as after phase 6: screenshots are byte-identical with no events.
 - [x] `backend/openapi.json` is unchanged.
-- [ ] Both CI jobs are green.
+- [x] Both CI jobs are green.
 
 ## Out of scope
 

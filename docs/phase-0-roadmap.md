@@ -145,7 +145,7 @@ REST stays the source of truth. The gateway only broadcasts changes that have al
 
 Phases 8 and 9 can move up to right after phase 3. Every PR after that then goes through CI, which shows the DevOps side of the project from early on.
 
-Done so far: phases 1–7. Live updates between viewers are described in [phase-7-realtime.md](phase-7-realtime.md).
+Done so far: phases 1–8. The app in Docker is described in [phase-8-docker.md](phase-8-docker.md).
 
 ## Later
 

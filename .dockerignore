@@ -1,0 +1,13 @@
+# Images are built from the repo's root, for its one lockfile. Only what the
+# builds need gets in; the host's node_modules is for another OS.
+*
+!package.json
+!package-lock.json
+!backend/
+!frontend/
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+**/.env
+**/.env.*
+!**/.env.example
