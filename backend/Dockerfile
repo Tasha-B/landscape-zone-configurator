@@ -18,6 +18,8 @@ RUN npm run build -w backend
 # For one-off commands that need the CLI: migrations and the seed
 FROM build AS tools
 WORKDIR /app/backend
+# `prisma` without npx, which would also print npm's update notices
+ENV PATH=/app/node_modules/.bin:$PATH
 USER node
 
 FROM node:24.22-slim AS runtime

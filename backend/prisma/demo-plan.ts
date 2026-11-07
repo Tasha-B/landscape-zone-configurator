@@ -1,6 +1,6 @@
 // The demo office from phase 1, loaded into the database
 import { demoPlan } from "./demo-plan-data.js";
-import { Lang, ZoneType, type PrismaClient } from "../src/generated/prisma/client.js";
+import { Lang, ZoneType, type Prisma, type PrismaClient } from "../src/generated/prisma/client.js";
 
 // Fixed ids: reseeding gives the same plan and zone ids, so URLs and later
 // references to them stay valid
@@ -32,34 +32,45 @@ const ZONE_TYPES = {
 export async function seedDemoPlan(prisma: PrismaClient): Promise<void> {
   await prisma.$transaction([
     prisma.floorPlan.deleteMany({ where: { id: DEMO_PLAN_ID } }),
-    prisma.floorPlan.create({
-      data: {
-        id: DEMO_PLAN_ID,
-        name: demoPlan.name,
-        viewBox: demoPlan.viewBox,
-        pxPerMeter: demoPlan.pxPerMeter,
-        // The demo office's walls and furniture, drawn by the frontend
-        background: DEMO_BACKGROUND,
-        zones: {
-          create: demoPlan.zones.map((zone, position) => {
-            const id = DEMO_ZONE_IDS[zone.id];
-            if (!id) throw new Error(`No fixed id for demo zone "${zone.id}"`);
-            return {
-              id,
-              type: ZONE_TYPES[zone.type],
-              shape: zone.shape,
-              color: zone.color,
-              zIndex: zone.zIndex,
-              position,
-              hitPadding: zone.hitPadding ?? null,
-              label: zone.label,
-              content: {
-                create: [Lang.en, Lang.ru].map((lang) => ({ lang, ...zone.content[lang] })),
-              },
-            };
-          }),
-        },
-      },
-    }),
+    prisma.floorPlan.create({ data: demoPlanRecord() }),
   ]);
+}
+
+// Loads the demo plan only if it is not there, and says whether it did. The
+// stack runs this on every start, so edits to the demo office survive a
+// restart, and a deleted one comes back.
+export async function seedDemoPlanIfMissing(prisma: PrismaClient): Promise<boolean> {
+  if ((await prisma.floorPlan.count({ where: { id: DEMO_PLAN_ID } })) > 0) return false;
+  await prisma.floorPlan.create({ data: demoPlanRecord() });
+  return true;
+}
+
+function demoPlanRecord(): Prisma.FloorPlanCreateInput {
+  return {
+    id: DEMO_PLAN_ID,
+    name: demoPlan.name,
+    viewBox: demoPlan.viewBox,
+    pxPerMeter: demoPlan.pxPerMeter,
+    // The demo office's walls and furniture, drawn by the frontend
+    background: DEMO_BACKGROUND,
+    zones: {
+      create: demoPlan.zones.map((zone, position) => {
+        const id = DEMO_ZONE_IDS[zone.id];
+        if (!id) throw new Error(`No fixed id for demo zone "${zone.id}"`);
+        return {
+          id,
+          type: ZONE_TYPES[zone.type],
+          shape: zone.shape,
+          color: zone.color,
+          zIndex: zone.zIndex,
+          position,
+          hitPadding: zone.hitPadding ?? null,
+          label: zone.label,
+          content: {
+            create: [Lang.en, Lang.ru].map((lang) => ({ lang, ...zone.content[lang] })),
+          },
+        };
+      }),
+    },
+  };
 }

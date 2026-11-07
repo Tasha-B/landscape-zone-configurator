@@ -53,7 +53,7 @@ The build context of both is the repo's root. A `.dockerignore` there lets in on
 | Stage | From | Holds |
 | --- | --- | --- |
 | `build` | `node:24.22-slim` and `openssl` | every dependency of the workspace (`npm ci -w backend`), which also runs `prisma generate`; `nest build` |
-| `tools` | `build` | used by `migrate`: the CLI, `tsx`, the schema, the migrations and the seed |
+| `tools` | `build` | used by `migrate`: the CLI, `tsx`, the schema, the migrations and the seed; `node_modules/.bin` on the `PATH`, so `prisma` runs without `npx` and its notices |
 | `runtime` (last) | `node:24.22-slim` | `dist` and production dependencies (`npm ci -w backend --omit=dev --ignore-scripts --legacy-peer-deps`) |
 
 - **`--ignore-scripts` in `runtime`,** because `postinstall` would call the CLI that `--omit=dev` removed. The generated client is already in `dist`.
@@ -106,7 +106,7 @@ New root scripts:
 | `stack:logs` | follows the logs |
 | `stack:down` | stops everything; the data is kept |
 
-`docker compose up --wait` has had trouble with one-shot services that exit, so step 4 checks that `stack:up` reports success on a healthy start with this Compose version.
+`docker compose up --wait` has had trouble with one-shot services that exit. With Compose 2.40 it reports success once `api` and `web` are healthy, and `migrate` has exited with 0.
 
 **Against development:** the stack's API and one started with `npm run dev:backend` would share the database but not their rooms, so a change made through one sends no event to viewers of the other. Run one at a time. Ports do not collide: the stack publishes 8080, and development uses 3000 and 5173.
 

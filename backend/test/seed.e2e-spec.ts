@@ -1,6 +1,12 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { DEMO_BACKGROUND, DEMO_PLAN_ID, DEMO_ZONE_IDS, seedDemoPlan } from "../prisma/demo-plan.js";
+import {
+  DEMO_BACKGROUND,
+  DEMO_PLAN_ID,
+  DEMO_ZONE_IDS,
+  seedDemoPlan,
+  seedDemoPlanIfMissing,
+} from "../prisma/demo-plan.js";
 import { demoPlan } from "../prisma/demo-plan-data.js";
 import { PrismaClient } from "../src/generated/prisma/client.js";
 import { ZONE_TYPE_NAMES } from "../src/zones/zone-type.js";
@@ -86,5 +92,27 @@ describe("demo plan seed (e2e)", () => {
 
     expect(await prisma.floorPlan.count()).toBe(2);
     expect(await prisma.floorPlan.count({ where: { name: "Another office" } })).toBe(1);
+  });
+
+  describe("only if missing", () => {
+    it("loads the demo plan when it is not there", async () => {
+      await prisma.floorPlan.deleteMany();
+
+      expect(await seedDemoPlanIfMissing(prisma)).toBe(true);
+
+      expect(await prisma.zone.count({ where: { planId: DEMO_PLAN_ID } })).toBe(demoPlan.zones.length);
+    });
+
+    it("leaves an edited demo plan as it is", async () => {
+      await seedDemoPlan(prisma);
+      await prisma.floorPlan.update({ where: { id: DEMO_PLAN_ID }, data: { name: "Edited" } });
+      await prisma.zone.delete({ where: { id: DEMO_ZONE_IDS.reception } });
+
+      expect(await seedDemoPlanIfMissing(prisma)).toBe(false);
+
+      const plan = await prisma.floorPlan.findUniqueOrThrow({ where: { id: DEMO_PLAN_ID }, include: { zones: true } });
+      expect(plan.name).toBe("Edited");
+      expect(plan.zones).toHaveLength(demoPlan.zones.length - 1);
+    });
   });
 });
