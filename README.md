@@ -11,7 +11,7 @@ and is being grown into a fullstack editor.
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS v4, Framer Motion, TanStack Query, React Router, Vitest, Testing Library | showcase, plans page and editor; every change saved at once and shown live to other viewers |
 | Backend  | NestJS 12, Prisma 7, REST + WebSockets            | REST for plans and zones with validation and `409` on stale versions, Socket.IO events after each saved change, Swagger UI, `/api/health` with a database check |
 | Database | PostgreSQL 18                                     | schema, migrations and the demo plan seed; local, in Docker |
-| DevOps   | Docker, docker-compose, GitHub Actions            | CI for both apps, backend e2e against Postgres, checks for a stale API contract; Postgres in docker-compose |
+| DevOps   | Docker, docker-compose, nginx, GitHub Actions     | CI for both apps, backend e2e against Postgres, checks for a stale API contract; the whole app in docker-compose, with migrations on start and healthchecks |
 
 ## Structure
 
@@ -40,6 +40,22 @@ docs/       project documentation
 - [Phase 7 — Realtime: plan](docs/phase-7-realtime-plan.md): Socket.IO rooms per plan, events after each saved change, the cache moving only forward, the editor under other viewers' changes
 - [Phase 7 — Realtime](docs/phase-7-realtime.md): the protocol, the cache moving only forward, `usePlanLive`, the editor under other viewers' changes, checks, findings
 - [Phase 8 — Docker: plan](docs/phase-8-docker-plan.md): images for the API and the frontend behind nginx, the full stack in Compose, migrations on start
+- [Phase 8 — Docker](docs/phase-8-docker.md): the stack, the images, nginx, checks, findings
+
+## Run in Docker
+
+The whole app in containers needs only Docker Desktop, no `npm install` and no `.env`:
+
+```bash
+npm run stack:up       # build and start everything; then http://localhost:8080
+npm run stack:logs     # follow the logs
+npm run stack:seed     # reset the demo office to its original state
+npm run stack:down     # stop everything; the data is kept
+```
+
+Without npm, `docker compose up -d --build --wait` does the same as `stack:up`. The first build takes a few minutes and needs Docker Hub. On every start, the migrations are applied and the demo office is loaded if it is missing; edits to it are kept. Swagger UI is at http://localhost:8080/api/docs. Set `WEB_PORT` or `DB_PORT` if 8080 or 5432 is taken.
+
+The stack and local development share the database. Run one API at a time: two APIs on one database do not share live updates.
 
 ## Run locally
 

@@ -1,6 +1,6 @@
 # Phase 8 — Docker: plan
 
-Part of the [roadmap](phase-0-roadmap.md). The result will be recorded in `phase-8-docker.md`.
+Part of the [roadmap](phase-0-roadmap.md). The result is recorded in [phase-8-docker.md](phase-8-docker.md).
 
 ## Goal
 
@@ -159,14 +159,14 @@ Each step is a separate commit, and both apps build after every one.
 
 ## Acceptance criteria
 
-- [ ] `npm run stack:up` on an empty volume builds and starts everything, and reports success once it is healthy.
-- [ ] Migrations are applied on start, and a missing demo office is loaded. Edits to it survive a restart, and `stack:seed` resets it.
-- [ ] The app works through `http://localhost:8080`: the showcase, the plans page, the editor, a reload on any page, and Swagger UI.
-- [ ] Live updates work through nginx, and survive a recreated API container.
-- [ ] `/` looks as under Vite: the screenshots are byte-identical.
-- [ ] Data survives `stack:down` and `stack:up`.
-- [ ] The API's image has no dev dependencies and no `.env`, and both images run as non-root.
-- [ ] Development with `db:up` and `dev:*` works as before.
+- [x] `npm run stack:up` on an empty volume builds and starts everything, and reports success once it is healthy.
+- [x] Migrations are applied on start, and a missing demo office is loaded. Edits to it survive a restart, and `stack:seed` resets it.
+- [x] The app works through `http://localhost:8080`: the showcase, the plans page, the editor, a reload on any page, and Swagger UI.
+- [x] Live updates work through nginx, and survive a recreated API container.
+- [x] `/` looks as under Vite: the screenshots are byte-identical.
+- [x] Data survives `stack:down` and `stack:up`.
+- [x] The API's image has no dev dependencies and no `.env`, and both images run as non-root.
+- [x] Development with `db:up` and `dev:*` works as before.
 - [ ] Both CI jobs are green.
 
 ## Out of scope
